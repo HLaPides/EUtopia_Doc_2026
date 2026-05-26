@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_absolute_error
 import pickle
 import os
 
@@ -58,10 +59,6 @@ df = df.fillna(df.mean(numeric_only=True))
 X = df.drop(columns=['country', 'year', 'voter_turnout'])
 y = df['voter_turnout']
 
-print(national.columns.tolist())
-print(national.head())
-
-
 # train model
 model = RandomForestRegressor(
     n_estimators=100,
@@ -73,11 +70,9 @@ model = RandomForestRegressor(
 model.fit(X, y)
 
 # evaluate model
-scores = cross_val_score(model, X, y, cv=5, scoring='r2')
-print(f"R² score: {scores.mean():.3f} (+/- {scores.std():.3f})")
-from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import cross_val_score
+scores = cross_val_score(model, X, y, cv=3, scoring='r2')
 mae_scores = cross_val_score(model, X, y, cv=3, scoring='neg_mean_absolute_error')
+print(f"R² score: {scores.mean():.3f} (+/- {scores.std():.3f})")
 print(f"Average error: {-mae_scores.mean():.1f} %")
 
 #-----
