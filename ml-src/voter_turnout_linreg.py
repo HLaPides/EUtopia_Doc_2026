@@ -17,20 +17,18 @@ region_map = {
     "EL": "Southern", "MT": "Southern", "CY": "Southern",
 }
 df["region"] = df["country"].map(region_map)
-df = pd.get_dummies(df, columns=["region"], drop_first=True) 
+df = pd.get_dummies(df, columns=["region"], drop_first=True)
 region_cols = [c for c in df.columns if c.startswith("region_")]
 
 FEATURES = [
     "compulsory_voting",
-    "years_eu_membership",
     "median_age",
     "eu_net_beneficiary",
     "national_turnout",
-    "urbanization_rate",
     "weekend_voting",
     "gdp_per_capita",
     "unemployment_rate",
-    "population"
+    "population",
 ] + region_cols
 TARGET = "voter_turnout"
 
@@ -74,4 +72,23 @@ print(f"  MSE test   : {MSE_test:.4f}")
 print("─" * 50)
 print(f"{'feature':<25} {'coef':>8}")
 for name, coef in zip(["intercept"] + FEATURES, b):
+    print(f"  {name:<23} {coef:>8.4f}")
+
+# refit on full dataset for final coefficients
+scaler_full = StandardScaler()
+X_full_scaled = scaler_full.fit_transform(X)
+X_full_b = np.column_stack([np.ones(len(X_full_scaled)), X_full_scaled])
+b_full = np.linalg.inv(X_full_b.T @ X_full_b) @ (X_full_b.T @ y)
+
+res_full = X_full_b @ b_full - y
+MSE_full = (res_full ** 2).mean()
+R2_full  = 1 - MSE_full / y.var()
+
+print(f"\nFinal model (full dataset, N={len(y)})")
+print("─" * 50)
+print(f"  R²  : {R2_full:.4f}")
+print(f"  MSE : {MSE_full:.4f}")
+print("─" * 50)
+print(f"{'feature':<25} {'coef':>8}")
+for name, coef in zip(["intercept"] + FEATURES, b_full):
     print(f"  {name:<23} {coef:>8.4f}")
