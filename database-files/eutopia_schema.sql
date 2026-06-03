@@ -8,105 +8,141 @@ DROP TABLE IF EXISTS StudentProgress;
 DROP TABLE IF EXISTS Simulation;
 DROP TABLE IF EXISTS DiagnosticSurvey;
 DROP TABLE IF EXISTS Lessons;
-DROP TABLE IF EXISTS Student;
+DROP TABLE IF EXISTS StudentProfile;
 DROP TABLE IF EXISTS Class;
-DROP TABLE IF EXISTS Teacher;
-DROP TABLE IF EXISTS EUOfficial;
+DROP TABLE IF EXISTS UserRole;
+DROP TABLE IF EXISTS Role;
+DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS PlatformPerformance;
 
-CREATE TABLE Teacher (
-    teacherID INT PRIMARY KEY,
-    countryOrigin VARCHAR(100),
+CREATE TABLE Users (
+    userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(100) NOT NULL,
     lastName VARCHAR(100) NOT NULL,
-    prefix VARCHAR(20)
+    email VARCHAR(150) UNIQUE,
+    countryOrigin VARCHAR(100),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT
+);
+
+CREATE TABLE Role (
+    roleID INT AUTO_INCREMENT PRIMARY KEY,
+    roleName VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE UserRole (
+    userID INT NOT NULL,
+    roleID INT NOT NULL,
+    PRIMARY KEY (userID, roleID),
+    FOREIGN KEY (userID) REFERENCES Users(userID),
+    FOREIGN KEY (roleID) REFERENCES Role(roleID)
 );
 
 CREATE TABLE Class (
-    classID INT PRIMARY KEY,
+    classID INT AUTO_INCREMENT PRIMARY KEY,
     teacherID INT NOT NULL,
     className VARCHAR(100) NOT NULL,
-    FOREIGN KEY (teacherID) REFERENCES Teacher(teacherID)
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (teacherID) REFERENCES Users(userID)
 );
 
-CREATE TABLE Student (
+CREATE TABLE StudentProfile (
     studentID INT PRIMARY KEY,
-    countryOrigin VARCHAR(100),
     age INT,
     surveyScore DECIMAL(5,2),
     classID INT,
-    firstName VARCHAR(100) NOT NULL,
-    lastName VARCHAR(100) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (studentID) REFERENCES Users(userID),
     FOREIGN KEY (classID) REFERENCES Class(classID)
 );
 
-CREATE TABLE EUOfficial (
-    officialID INT PRIMARY KEY,
-    originCountry VARCHAR(100),
-    firstName VARCHAR(100) NOT NULL,
-    lastName VARCHAR(100) NOT NULL
-);
-
 CREATE TABLE Lessons (
-    lessonID INT PRIMARY KEY,
+    lessonID INT AUTO_INCREMENT PRIMARY KEY,
     classID INT,
-    approvalStatus VARCHAR(50) DEFAULT 'Pending',
-    content TEXT NOT NULL,
     teacherID INT NOT NULL,
     approvedBy INT,
-    topicName VARCHAR(100),
     title VARCHAR(150) NOT NULL,
+    topicName VARCHAR(100),
+    content TEXT NOT NULL,
     difficultyLevel VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approvalStatus VARCHAR(50) DEFAULT 'Pending',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
     FOREIGN KEY (classID) REFERENCES Class(classID),
-    FOREIGN KEY (teacherID) REFERENCES Teacher(teacherID),
-    FOREIGN KEY (approvedBy) REFERENCES EUOfficial(officialID)
+    FOREIGN KEY (teacherID) REFERENCES Users(userID),
+    FOREIGN KEY (approvedBy) REFERENCES Users(userID)
 );
 
 CREATE TABLE Assessment (
-    assessmentID INT PRIMARY KEY,
+    assessmentID INT AUTO_INCREMENT PRIMARY KEY,
     lessonID INT NOT NULL,
     assessmentType VARCHAR(50) NOT NULL,
     maxScore DECIMAL(5,2),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
 CREATE TABLE Question (
-    questionID INT PRIMARY KEY,
+    questionID INT AUTO_INCREMENT PRIMARY KEY,
     assessmentID INT NOT NULL,
     questionText TEXT NOT NULL,
     questionType VARCHAR(50),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
     FOREIGN KEY (assessmentID) REFERENCES Assessment(assessmentID)
 );
 
 CREATE TABLE Response (
-    responseID INT PRIMARY KEY,
-    input TEXT,
+    responseID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     questionID INT NOT NULL,
+    input TEXT,
     score DECIMAL(5,2),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (studentID) REFERENCES Users(userID),
     FOREIGN KEY (questionID) REFERENCES Question(questionID)
 );
 
 CREATE TABLE StudentProgress (
-    progressID INT PRIMARY KEY,
-    completionRates DECIMAL(5,2),
-    quizPerformance DECIMAL(5,2),
-    avgEngagementTime DECIMAL(8,2),
+    progressID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     lessonID INT NOT NULL,
+    completionRate DECIMAL(5,2),
+    quizPerformance DECIMAL(5,2),
+    avgEngagementTime DECIMAL(8,2),
     completionStatus VARCHAR(50),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (studentID) REFERENCES Users(userID),
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
 CREATE TABLE Simulation (
-    simulationID INT PRIMARY KEY,
+    simulationID INT AUTO_INCREMENT PRIMARY KEY,
+    studentID INT NOT NULL,
     countryName VARCHAR(100),
     population BIGINT,
     gdpPerCapita DECIMAL(12,2),
-    studentID INT NOT NULL,
     unemploymentRate DECIMAL(5,2),
     compulsoryVoting BOOLEAN,
     yearsMembership INT,
@@ -116,11 +152,15 @@ CREATE TABLE Simulation (
     netBeneficiary BOOLEAN,
     weekendVoting BOOLEAN,
     predictedTurnout DECIMAL(5,2),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID)
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (studentID) REFERENCES Users(userID)
 );
 
 CREATE TABLE DiagnosticSurvey (
-    surveyID INT PRIMARY KEY,
+    surveyID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     lessonID INT,
     age INT,
@@ -131,14 +171,25 @@ CREATE TABLE DiagnosticSurvey (
     trustPoliticians DECIMAL(5,2),
     satisfactionDemocracy DECIMAL(5,2),
     predictedTrust DECIMAL(5,2),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (studentID) REFERENCES Users(userID),
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
 CREATE TABLE PlatformPerformance (
-    performanceID INT PRIMARY KEY,
+    performanceID INT AUTO_INCREMENT PRIMARY KEY,
     numActiveUsers INT DEFAULT 0,
     completionRates DECIMAL(5,2),
     numLessonsCreated INT DEFAULT 0,
-    numLessonsApproved INT DEFAULT 0
+    numLessonsApproved INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT
 );
+
+INSERT INTO Role (roleName)
+VALUES ('student'), ('teacher'), ('eu_official');
