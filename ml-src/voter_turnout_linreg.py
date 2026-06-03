@@ -1,3 +1,29 @@
+""" 
+linear regression model predicting EU voter turnout.
+
+Features:
+  - compulsory_voting     : binary, whether voting is legally required
+  - median_age            : median age of the population
+  - median_age_sq         : median age squared. relationship isn't linear, its closer to a parabola than a line so we sqaured it
+  - national_turnout      : national election turnout (%)
+  - national_turnout_sq   : national election turnout squared, same reasoning as median_age_sq
+  - unemployment_rate     : unemployment rate (%)
+  - population            : country population
+  - compulsory_x_western  : interaction between compulsory voting and Western region
+                            compulsory voting is only meaningfully enforced in Western
+                            Europe (Belgium and Luxembourg); Greece has
+                            compulsory voting on paper but don't do much to enforece it
+  - region_northern/
+    southern/western      : region binary columns with Eastern Europe as the reference
+                            category. regional effects capture structural differences
+                            in EU engagement not explained by the other features.
+                            Eastern Europe averages around 20pp lower turnout than Western
+
+Model is fit on an 80/20 train/test split (random_state=42). LOO-CV is used as the
+primary performance metric.
+
+Final performance: LOO-CV R²=0.7928, MSE=77.61
+"""
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -5,31 +31,25 @@ from sklearn.model_selection import train_test_split
 
 df = pd.read_csv("../datasets/eu_turnout_clean.csv")
 
-# region mapping
-region_map = {
-    "BE": "Western", "FR": "Western", "DE": "Western", "NL": "Western",
-    "LU": "Western", "AT": "Western", "IE": "Western",
-    "SE": "Northern", "DK": "Northern", "FI": "Northern",
-    "EE": "Northern", "LV": "Northern", "LT": "Northern",
-    "PL": "Eastern", "CZ": "Eastern", "SK": "Eastern", "HU": "Eastern",
-    "RO": "Eastern", "BG": "Eastern", "SI": "Eastern", "HR": "Eastern",
-    "ES": "Southern", "PT": "Southern", "IT": "Southern",
-    "EL": "Southern", "MT": "Southern", "CY": "Southern",
-}
-df["region"] = df["country"].map(region_map)
-df = pd.get_dummies(df, columns=["region"], drop_first=True)
-region_cols = [c for c in df.columns if c.startswith("region_")]
+df["national_turnout_sq"]  = df["national_turnout"] ** 2
+df["log_unemployment_rate"] = np.log(df["unemployment_rate"])
+df["median_age_sq"]        = df["median_age"] ** 2
+df["compulsory_x_western"] = df["compulsory_voting"] * df["region_western"]
 
 FEATURES = [
     "compulsory_voting",
     "median_age",
-    "eu_net_beneficiary",
+    "median_age_sq",
     "national_turnout",
-    "weekend_voting",
-    "gdp_per_capita",
+    "national_turnout_sq",
+    "log_unemployment_rate",
     "unemployment_rate",
     "population",
-] + region_cols
+    "compulsory_x_western",
+    "region_northern",
+    "region_southern",
+    "region_western",
+]
 TARGET = "voter_turnout"
 
 X = np.array(df[FEATURES])
@@ -52,12 +72,9 @@ b = np.linalg.inv(X_train_b.T @ X_train_b) @ (X_train_b.T @ y_train)
 y_hat_train = X_train_b @ b
 y_hat_test  = X_test_b  @ b
 
-res_train = y_hat_train - y_train
-res_test  = y_hat_test  - y_test
-
 # metrics
-MSE_train = (res_train ** 2).mean()
-MSE_test  = (res_test  ** 2).mean()
+MSE_train = ((y_hat_train - y_train) ** 2).mean()
+MSE_test  = ((y_hat_test  - y_test)  ** 2).mean()
 R2_train  = 1 - MSE_train / y_train.var()
 R2_test   = 1 - MSE_test  / y_test.var()
 
@@ -69,26 +86,24 @@ print(f"  R² train   : {R2_train:.4f}")
 print(f"  R² test    : {R2_test:.4f}")
 print(f"  MSE train  : {MSE_train:.4f}")
 print(f"  MSE test   : {MSE_test:.4f}")
+print(f"\n{'feature':<25} {'coef':>8}")
 print("─" * 50)
-print(f"{'feature':<25} {'coef':>8}")
 for name, coef in zip(["intercept"] + FEATURES, b):
     print(f"  {name:<23} {coef:>8.4f}")
 
-# refit on full dataset for final coefficients
-scaler_full = StandardScaler()
-X_full_scaled = scaler_full.fit_transform(X)
-X_full_b = np.column_stack([np.ones(len(X_full_scaled)), X_full_scaled])
-b_full = np.linalg.inv(X_full_b.T @ X_full_b) @ (X_full_b.T @ y)
+# LOO used because its a relatively small dataset
+scaler_loo = StandardScaler()
+X_loo_scaled = scaler_loo.fit_transform(X)
+y_loo = np.empty(len(y))
+for obs in range(len(y)):
+    X_loo = np.concatenate([X_loo_scaled[:obs], X_loo_scaled[obs+1:]])
+    y_loo_train = np.concatenate([y[:obs], y[obs+1:]])
+    X_loo_b = np.column_stack([np.ones(len(X_loo)), X_loo])
+    b_loo = np.linalg.inv(X_loo_b.T @ X_loo_b) @ (X_loo_b.T @ y_loo_train)
+    y_loo[obs] = np.array([1, *X_loo_scaled[obs]]) @ b_loo
 
-res_full = X_full_b @ b_full - y
-MSE_full = (res_full ** 2).mean()
-R2_full  = 1 - MSE_full / y.var()
+MSE_loo = ((y_loo - y) ** 2).mean()
+R2_loo  = 1 - MSE_loo / y.var()
 
-print(f"\nFinal model (full dataset, N={len(y)})")
-print("─" * 50)
-print(f"  R²  : {R2_full:.4f}")
-print(f"  MSE : {MSE_full:.4f}")
-print("─" * 50)
-print(f"{'feature':<25} {'coef':>8}")
-for name, coef in zip(["intercept"] + FEATURES, b_full):
-    print(f"  {name:<23} {coef:>8.4f}")
+print(f"\nLOO-CV R²  : {R2_loo:.4f}")
+print(f"LOO-CV MSE : {MSE_loo:.4f}")

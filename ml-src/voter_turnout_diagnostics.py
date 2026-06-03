@@ -1,3 +1,6 @@
+"""
+This file creates plots that allows you to analyze the model for linearity, homoscedasticity, and autocorrelation
+"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
