@@ -1,81 +1,77 @@
 import numpy as np
 import pandas as pd
-from scipy import stats
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
-# ── Load data ──────────────────────────────────────────────────────────────────
 df = pd.read_csv("../datasets/eu_turnout_clean.csv")
 
+# region mapping
+region_map = {
+    "BE": "Western", "FR": "Western", "DE": "Western", "NL": "Western",
+    "LU": "Western", "AT": "Western", "IE": "Western",
+    "SE": "Northern", "DK": "Northern", "FI": "Northern",
+    "EE": "Northern", "LV": "Northern", "LT": "Northern",
+    "PL": "Eastern", "CZ": "Eastern", "SK": "Eastern", "HU": "Eastern",
+    "RO": "Eastern", "BG": "Eastern", "SI": "Eastern", "HR": "Eastern",
+    "ES": "Southern", "PT": "Southern", "IT": "Southern",
+    "EL": "Southern", "MT": "Southern", "CY": "Southern",
+}
+df["region"] = df["country"].map(region_map)
+df = pd.get_dummies(df, columns=["region"], drop_first=True) 
+region_cols = [c for c in df.columns if c.startswith("region_")]
+
 FEATURES = [
-    "gdp_per_capita",
-    "unemployment_rate",
     "compulsory_voting",
     "years_eu_membership",
-    "urbanization_rate",
     "median_age",
     "eu_net_beneficiary",
-    "weekend_voting",
     "national_turnout",
-]
+    "urbanization_rate",
+    "weekend_voting",
+    "gdp_per_capita",
+    "unemployment_rate",
+    "population"
+] + region_cols
 TARGET = "voter_turnout"
 
-X = df[FEATURES].values
-y = df[TARGET].values
+X = np.array(df[FEATURES])
+y = np.array(df[TARGET])
 
-# ── Standardise features (zero mean, unit variance) ───────────────────────────
-X_mean = X.mean(axis=0)
-X_std  = X.std(axis=0)
-X_std[X_std == 0] = 1          # guard against constant columns
-X_scaled = (X - X_mean) / X_std
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ── OLS via normal equations ───────────────────────────────────────────────────
-X_int = np.column_stack([np.ones(len(X_scaled)), X_scaled])   # add intercept
-coeffs, _, _, _ = np.linalg.lstsq(X_int, y, rcond=None)
+# standardise
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled  = scaler.transform(X_test)
 
-# ── Model metrics ──────────────────────────────────────────────────────────────
-y_pred  = X_int @ coeffs
-ss_res  = np.sum((y - y_pred) ** 2)
-ss_tot  = np.sum((y - y.mean()) ** 2)
-r2      = 1 - ss_res / ss_tot
+X_train_b = np.column_stack([np.ones(len(X_train_scaled)), X_train_scaled])
+X_test_b  = np.column_stack([np.ones(len(X_test_scaled)),  X_test_scaled])
 
-n, p    = X_int.shape
-mse     = ss_res / (n - p)
-rmse    = np.sqrt(mse)
+# line of best fit
+b = np.linalg.inv(X_train_b.T @ X_train_b) @ (X_train_b.T @ y_train)
 
-# ── Standard errors, t-stats, p-values ────────────────────────────────────────
-cov      = mse * np.linalg.inv(X_int.T @ X_int)
-se       = np.sqrt(np.diag(cov))
-t_stats  = coeffs / se
-p_values = 2 * (1 - stats.t.cdf(np.abs(t_stats), df=n - p))
+# predictions and residuals
+y_hat_train = X_train_b @ b
+y_hat_test  = X_test_b  @ b
 
-# ── Results table ──────────────────────────────────────────────────────────────
-def sig_stars(p):
-    if p < 0.001: return "***"
-    if p < 0.01:  return "**"
-    if p < 0.05:  return "*"
-    return ""
+res_train = y_hat_train - y_train
+res_test  = y_hat_test  - y_test
 
-feature_names = ["intercept"] + FEATURES
-results = pd.DataFrame({
-    "feature":    feature_names,
-    "coef":       coeffs,
-    "std_err":    se,
-    "t_stat":     t_stats,
-    "p_value":    p_values,
-    "sig":        [sig_stars(p) for p in p_values],
-})
+# metrics
+MSE_train = (res_train ** 2).mean()
+MSE_test  = (res_test  ** 2).mean()
+R2_train  = 1 - MSE_train / y_train.var()
+R2_test   = 1 - MSE_test  / y_test.var()
 
-print(f"OLS Linear Regression — EU Voter Turnout")
-print(f"{'─' * 60}")
-print(f"  N        : {n}")
-print(f"  R²       : {r2:.4f}")
-print(f"  RMSE     : {rmse:.4f}")
-print(f"{'─' * 60}")
-print(results.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
-print()
-print("Significance: * p<0.05  ** p<0.01  *** p<0.001")
-print("Note: coefficients are on standardised features.")
-
-# ── Actual vs predicted ────────────────────────────────────────────────────────
-df["predicted"]  = y_pred
-df["residual"]   = y - y_pred
-print(f"\nResiduals — min: {df['residual'].min():.2f}  max: {df['residual'].max():.2f}")
+print("OLS Linear Regression — EU Voter Turnout")
+print("─" * 50)
+print(f"  N train    : {len(y_train)}")
+print(f"  N test     : {len(y_test)}")
+print(f"  R² train   : {R2_train:.4f}")
+print(f"  R² test    : {R2_test:.4f}")
+print(f"  MSE train  : {MSE_train:.4f}")
+print(f"  MSE test   : {MSE_test:.4f}")
+print("─" * 50)
+print(f"{'feature':<25} {'coef':>8}")
+for name, coef in zip(["intercept"] + FEATURES, b):
+    print(f"  {name:<23} {coef:>8.4f}")
