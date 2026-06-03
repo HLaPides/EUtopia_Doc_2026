@@ -86,6 +86,7 @@ CREATE TABLE Lessons (
 CREATE TABLE Assessment (
     assessmentID INT AUTO_INCREMENT PRIMARY KEY,
     lessonID INT NOT NULL,
+    assessmentName VARCHAR(150) NOT NULL,
     assessmentType VARCHAR(50) NOT NULL,
     maxScore DECIMAL(5,2),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -190,6 +191,3 @@ CREATE TABLE PlatformPerformance (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updatedBy INT
 );
-
-INSERT INTO Role (roleName)
-VALUES ('student'), ('teacher'), ('eu_official');
