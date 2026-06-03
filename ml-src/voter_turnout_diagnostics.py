@@ -27,7 +27,7 @@ compulsory = df["compulsory_voting"].values == 1
 fig, axes = plt.subplots(1, 2, figsize=(14, 4))
 
 # residual vs fitted, checks for linearity and homoscedasticity.
-# compulsory voting marked in red, countries at the end are Belgium and Luxembourg who both consistently enforce their compulsory voting unlike Greece and Bulgaria
+# compulsory voting marked in red, countries at the end are Belgium and Luxembourg who both consistently enforce their compulsory voting unlike Greece
 axes[0].scatter(y_pred[~compulsory], resids[~compulsory], alpha=0.5, s=20, label="voluntary")
 axes[0].scatter(y_pred[compulsory],  resids[compulsory],  alpha=0.5, s=20, label="compulsory", color="red")
 axes[0].axhline(0, color="black", linewidth=1, linestyle="--")
