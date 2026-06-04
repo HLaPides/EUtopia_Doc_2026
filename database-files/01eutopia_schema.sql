@@ -1,21 +1,9 @@
--- EUtopia Database DDL
--- Lesson-centered schema based on the provided ERD
+DROP DATABASE IF EXISTS eutopia_db;
+CREATE DATABASE IF NOT EXISTS eutopia_db;
 
-DROP TABLE IF EXISTS Response;
-DROP TABLE IF EXISTS Question;
-DROP TABLE IF EXISTS Assessment;
-DROP TABLE IF EXISTS StudentProgress;
-DROP TABLE IF EXISTS Simulation;
-DROP TABLE IF EXISTS DiagnosticSurvey;
-DROP TABLE IF EXISTS Lessons;
-DROP TABLE IF EXISTS StudentProfile;
-DROP TABLE IF EXISTS Class;
-DROP TABLE IF EXISTS UserRole;
-DROP TABLE IF EXISTS Role;
-DROP TABLE IF EXISTS Users;
-DROP TABLE IF EXISTS PlatformPerformance;
+USE eutopia_db;
 
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(100) NOT NULL,
     lastName VARCHAR(100) NOT NULL,
@@ -27,20 +15,20 @@ CREATE TABLE Users (
     updatedBy INT
 );
 
-CREATE TABLE Role (
+CREATE TABLE IF NOT EXISTS Roles (
     roleID INT AUTO_INCREMENT PRIMARY KEY,
     roleName VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE UserRole (
+CREATE TABLE IF NOT EXISTS UserRole (
     userID INT NOT NULL,
     roleID INT NOT NULL,
     PRIMARY KEY (userID, roleID),
     FOREIGN KEY (userID) REFERENCES Users(userID),
-    FOREIGN KEY (roleID) REFERENCES Role(roleID)
+    FOREIGN KEY (roleID) REFERENCES Roles(roleID)
 );
 
-CREATE TABLE Class (
+CREATE TABLE IF NOT EXISTS Class (
     classID INT AUTO_INCREMENT PRIMARY KEY,
     teacherID INT NOT NULL,
     className VARCHAR(100) NOT NULL,
@@ -51,7 +39,7 @@ CREATE TABLE Class (
     FOREIGN KEY (teacherID) REFERENCES Users(userID)
 );
 
-CREATE TABLE StudentProfile (
+CREATE TABLE IF NOT EXISTS StudentProfile (
     studentID INT PRIMARY KEY,
     age INT,
     surveyScore DECIMAL(5,2),
@@ -64,7 +52,7 @@ CREATE TABLE StudentProfile (
     FOREIGN KEY (classID) REFERENCES Class(classID)
 );
 
-CREATE TABLE Lessons (
+CREATE TABLE IF NOT EXISTS Lessons (
     lessonID INT AUTO_INCREMENT PRIMARY KEY,
     classID INT,
     teacherID INT NOT NULL,
@@ -83,9 +71,10 @@ CREATE TABLE Lessons (
     FOREIGN KEY (approvedBy) REFERENCES Users(userID)
 );
 
-CREATE TABLE Assessment (
+CREATE TABLE IF NOT EXISTS Assessment (
     assessmentID INT AUTO_INCREMENT PRIMARY KEY,
     lessonID INT NOT NULL,
+    assessmentName VARCHAR(150) NOT NULL,
     assessmentType VARCHAR(50) NOT NULL,
     maxScore DECIMAL(5,2),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,7 +84,7 @@ CREATE TABLE Assessment (
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
-CREATE TABLE Question (
+CREATE TABLE IF NOT EXISTS Question (
     questionID INT AUTO_INCREMENT PRIMARY KEY,
     assessmentID INT NOT NULL,
     questionText TEXT NOT NULL,
@@ -107,7 +96,7 @@ CREATE TABLE Question (
     FOREIGN KEY (assessmentID) REFERENCES Assessment(assessmentID)
 );
 
-CREATE TABLE Response (
+CREATE TABLE IF NOT EXISTS Response (
     responseID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     questionID INT NOT NULL,
@@ -121,7 +110,7 @@ CREATE TABLE Response (
     FOREIGN KEY (questionID) REFERENCES Question(questionID)
 );
 
-CREATE TABLE StudentProgress (
+CREATE TABLE IF NOT EXISTS StudentProgress (
     progressID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     lessonID INT NOT NULL,
@@ -137,7 +126,7 @@ CREATE TABLE StudentProgress (
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
-CREATE TABLE Simulation (
+CREATE TABLE IF NOT EXISTS Simulation (
     simulationID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     countryName VARCHAR(100),
@@ -159,7 +148,7 @@ CREATE TABLE Simulation (
     FOREIGN KEY (studentID) REFERENCES Users(userID)
 );
 
-CREATE TABLE DiagnosticSurvey (
+CREATE TABLE IF NOT EXISTS DiagnosticSurvey (
     surveyID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     lessonID INT,
@@ -179,7 +168,7 @@ CREATE TABLE DiagnosticSurvey (
     FOREIGN KEY (lessonID) REFERENCES Lessons(lessonID)
 );
 
-CREATE TABLE PlatformPerformance (
+CREATE TABLE IF NOT EXISTS PlatformPerformance (
     performanceID INT AUTO_INCREMENT PRIMARY KEY,
     numActiveUsers INT DEFAULT 0,
     completionRates DECIMAL(5,2),
@@ -190,6 +179,3 @@ CREATE TABLE PlatformPerformance (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updatedBy INT
 );
-
-INSERT INTO Role (roleName)
-VALUES ('student'), ('teacher'), ('eu_official');
