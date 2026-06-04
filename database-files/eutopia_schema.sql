@@ -1,6 +1,11 @@
 -- EUtopia Database DDL
 -- Lesson-centered schema based on the provided ERD
 
+
+
+CREATE DATABASE IF NOT EXISTS eutopia;
+USE eutopia;
+
 DROP TABLE IF EXISTS Response;
 DROP TABLE IF EXISTS Question;
 DROP TABLE IF EXISTS Assessment;
