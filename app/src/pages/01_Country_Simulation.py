@@ -6,12 +6,15 @@ import world_bank_data as wb
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
+import requests
 from modules.nav import SideBarLinks
 
 st.set_page_config(layout='wide')
 
 # Call the SideBarLinks from the nav module in the modules directory
 SideBarLinks()
+
+BASE_URL = "http://web-api:4000"
 
 # set the header of the page
 st.header('Build Your Own Country')
@@ -146,8 +149,23 @@ with col12:
         help="The election turnout of voters for national votes."
     )
 
-st.button("Predict EU Election Turnout",
-             type='primary',
-             use_container_width=True)
+if st.button("Predict EU Election Turnout", type='primary', use_container_width=True):
+    payload = {
+        "compulsory_voting": 1 if compulsory_voting == "Yes" else 0,
+        "median_age": median_age,
+        "national_turnout": nat_election_turnout,
+        "unemployment_rate": unemployment_rate,
+        "population": population,
+        "region_northern": 0,
+        "region_southern": 0,
+        "region_western": 0,
+    }
 
+    response = requests.post(f"{BASE_URL}/ml/turnout-prediction", json=payload)
 
+    if response.status_code == 200:
+        result = response.json()
+        predicted = result.get("predictedTurnout")
+        st.success(f"Predicted EU Election Turnout for **{country_name}**: **{predicted:.1f}%**")
+    else:
+        st.error("Something went wrong with the prediction. Please try again.")

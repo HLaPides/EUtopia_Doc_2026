@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import requests
 from modules.nav import SideBarLinks
 
 st.set_page_config(layout='wide')
@@ -11,8 +12,13 @@ st.set_page_config(layout='wide')
 # Show appropriate sidebar links for the role of the currently logged in user
 SideBarLinks()
 
+BASE_URL = "http://web-api:4000"
+
+lessons_resp = requests.get(f"{BASE_URL}/lessons").json()
+
 st.title(f"Welcome Teacher, {st.session_state['first_name']}.")
 
+#all tabs need more revising to get mock data
 tab1, tab2, tab3 = st.tabs(["Top Performing Students", "Recent Lessons", "Student Engagement"])
 
 with tab1:
@@ -27,18 +33,15 @@ with tab2:
     h1.write("**Lesson**")
     h2.write("**Assigned**")
     h3.write("**Completed**")
-    
-    lessons = [
-        ("Algebra Basics", "Jan 10", "24/30"),
-        ("Fractions", "Jan 15", "18/30"),
-        ("Geometry Intro", "Jan 20", "30/30"),
-    ]
-    
-    for name, assigned, completed in lessons:
-        c1, c2, c3 = st.columns([3, 2, 2])
-        c1.write(name)
-        c2.write(assigned)
-        c3.write(completed)
+
+    if lessons_resp:
+        for lesson in lessons_resp:
+            c1, c2, c3 = st.columns([3, 2, 2])
+            c1.write(lesson.get("title", "N/A"))
+            c2.write(str(lesson.get("createdAt", "N/A"))[:10])
+            c3.write(lesson.get("approvalStatus", "N/A"))
+    else:
+        st.write("No lessons available.")
 
 with tab3:
     df = pd.DataFrame({
