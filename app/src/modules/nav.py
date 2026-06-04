@@ -15,7 +15,7 @@ def about_page_nav():
     st.sidebar.page_link("pages/30_About.py", label="About", icon="🧠")
 
 
-# ---- Role: pol_strat_advisor ------------------------------------------------
+# ---- Role: student ------------------------------------------------
 
 def student_home_nav():
     st.sidebar.page_link(
@@ -25,43 +25,33 @@ def student_home_nav():
 
 def country_simulation_nav():
     st.sidebar.page_link(
-        "pages/01_Country_Simulation.py", label="Country Simulation", icon="🏦"
+        "pages/01_Country_Simulation.py", label="Country Simulation", icon="📍"
     )
 
 
 def diagnostic_survey_nav():
-    st.sidebar.page_link("pages/02_Diagnostic_Survey.py", label="Diagnostic Survey", icon="🗺️")
+    st.sidebar.page_link("pages/02_Diagnostic_Survey.py", label="Diagnostic Survey", icon="📋")
 
 
-# ---- Role: usaid_worker -----------------------------------------------------
+# ---- Role: teacher -----------------------------------------------------
 
-def usaid_worker_home_nav():
+def teacher_home_nav():
     st.sidebar.page_link(
-        "pages/10_USAID_Worker_Home.py", label="USAID Worker Home", icon="🏠"
+        "pages/10_Teacher_Home.py", label="Dashboard", icon="👤"
     )
 
+#make page that gets students in class
+def my_students_nav():
+    st.sidebar.page_link("pages/11_My_Students.py", label="My Students", icon="📋")
 
-def ngo_directory_nav():
-    st.sidebar.page_link("pages/14_NGO_Directory.py", label="NGO Directory", icon="📁")
+#make page for lessons
+def lessons_nav():
+    st.sidebar.page_link("pages/12_Lessons.py", label="Lessons", icon="📚")
 
-
-def add_ngo_nav():
-    st.sidebar.page_link("pages/15_Add_NGO.py", label="Add New NGO", icon="➕")
-
-
-def prediction_nav():
+#make page for analytics
+def analytics_nav():
     st.sidebar.page_link(
-        "pages/11_Prediction.py", label="Regression Prediction", icon="📈"
-    )
-
-
-def api_test_nav():
-    st.sidebar.page_link("pages/12_API_Test.py", label="Test the API", icon="🛜")
-
-
-def classification_nav():
-    st.sidebar.page_link(
-        "pages/13_Classification.py", label="Classification Demo", icon="🌺"
+        "pages/13_Analytics.py", label="Analytics", icon="📈"
     )
 
 
@@ -107,13 +97,11 @@ def SideBarLinks(show_home=False):
             country_simulation_nav()
             diagnostic_survey_nav()
 
-        if st.session_state["role"] == "usaid_worker":
-            usaid_worker_home_nav()
-            ngo_directory_nav()
-            add_ngo_nav()
-            prediction_nav()
-            api_test_nav()
-            classification_nav()
+        if st.session_state["role"] == "teacher":
+            teacher_home_nav()
+            my_students_nav()
+            lessons_nav()
+            analytics_nav()
 
         if st.session_state["role"] == "administrator":
             admin_home_nav()
