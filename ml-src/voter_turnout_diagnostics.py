@@ -4,14 +4,25 @@ This file creates plots that allows you to analyze the model for linearity, homo
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy import stats
 
 df = pd.read_csv("../datasets/eu_turnout_clean.csv")
 
+df["national_turnout_sq"]  = df["national_turnout"] ** 2
+df["median_age_sq"]        = df["median_age"] ** 2
+df["compulsory_x_western"] = df["compulsory_voting"] * df["region_western"]
+
 FEATURES = [
-    "gdp_per_capita", "unemployment_rate", "compulsory_voting",
-    "years_eu_membership", "urbanization_rate", "median_age",
-    "eu_net_beneficiary", "weekend_voting", "national_turnout",
+    "compulsory_voting",
+    "median_age",
+    "median_age_sq",
+    "national_turnout",
+    "national_turnout_sq",
+    "unemployment_rate",
+    "population",
+    "compulsory_x_western",
+    "region_northern",
+    "region_southern",
+    "region_western",
 ]
 
 X = df[FEATURES].values
@@ -27,7 +38,8 @@ compulsory = df["compulsory_voting"].values == 1
 fig, axes = plt.subplots(1, 2, figsize=(14, 4))
 
 # residual vs fitted, checks for linearity and homoscedasticity.
-# compulsory voting marked in red, countries at the end are Belgium and Luxembourg who both consistently enforce their compulsory voting unlike Greece
+# compulsory voting marked in red, countries at the end are Belgium and Luxembourg
+# who both consistently enforce their compulsory voting unlike Greece
 axes[0].scatter(y_pred[~compulsory], resids[~compulsory], alpha=0.5, s=20, label="voluntary")
 axes[0].scatter(y_pred[compulsory],  resids[compulsory],  alpha=0.5, s=20, label="compulsory", color="red")
 axes[0].axhline(0, color="black", linewidth=1, linestyle="--")
