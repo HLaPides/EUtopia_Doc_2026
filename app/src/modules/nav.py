@@ -17,20 +17,20 @@ def about_page_nav():
 
 # ---- Role: pol_strat_advisor ------------------------------------------------
 
-def pol_strat_home_nav():
+def student_home_nav():
     st.sidebar.page_link(
-        "pages/00_Pol_Strat_Home.py", label="Political Strategist Home", icon="👤"
+        "pages/00_Student_Home.py", label="Dashboard", icon="👤"
     )
 
 
-def world_bank_viz_nav():
+def country_simulation_nav():
     st.sidebar.page_link(
-        "pages/01_World_Bank_Viz.py", label="World Bank Visualization", icon="🏦"
+        "pages/01_Country_Simulation.py", label="Country Simulation", icon="🏦"
     )
 
 
-def map_demo_nav():
-    st.sidebar.page_link("pages/02_Map_Demo.py", label="Map Demonstration", icon="🗺️")
+def diagnostic_survey_nav():
+    st.sidebar.page_link("pages/02_Diagnostic_Survey.py", label="Diagnostic Survey", icon="🗺️")
 
 
 # ---- Role: usaid_worker -----------------------------------------------------
@@ -102,10 +102,10 @@ def SideBarLinks(show_home=False):
 
     if st.session_state["authenticated"]:
 
-        if st.session_state["role"] == "pol_strat_advisor":
-            pol_strat_home_nav()
-            world_bank_viz_nav()
-            map_demo_nav()
+        if st.session_state["role"] == "student":
+            student_home_nav()
+            country_simulation_nav()
+            diagnostic_survey_nav()
 
         if st.session_state["role"] == "usaid_worker":
             usaid_worker_home_nav()
