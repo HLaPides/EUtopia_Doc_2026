@@ -3,8 +3,8 @@ CREATE DATABASE IF NOT EXISTS eutopia_db;
 
 
 
-CREATE DATABASE IF NOT EXISTS eutopia;
-USE eutopia;
+CREATE DATABASE IF NOT EXISTS eutopia_db;
+USE eutopia_db;
 
 DROP TABLE IF EXISTS Response;
 DROP TABLE IF EXISTS Question;
