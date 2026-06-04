@@ -62,7 +62,7 @@ if st.button('Teacher',
     st.session_state['authenticated'] = True
     st.session_state['role'] = 'teacher'
     st.session_state['first_name'] = 'Marco'
-    st.switch_page('pages/10_USAID_Worker_Home.py')
+    st.switch_page('pages/10_Teacher_Home.py')
 
 if st.button('EU Official',
              type='primary',
