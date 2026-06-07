@@ -196,3 +196,14 @@ CREATE TABLE IF NOT EXISTS PlatformPerformance (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updatedBy INT
 );
+
+CREATE TABLE IF NOT EXISTS voter_turnout_params (
+    sequence_number INT PRIMARY KEY,
+    beta_vals TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS voter_turnout_scaler (
+    sequence_number INT PRIMARY KEY,
+    feature_means TEXT NOT NULL,
+    feature_stds  TEXT NOT NULL
+);
