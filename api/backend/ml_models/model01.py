@@ -6,12 +6,12 @@ import numpy as np
 from flask import current_app
 from backend.db_connection import get_db
 
-
 def train():
     """
     Placeholder for a training routine. Could be triggered from an
     admin route to retrain the model and store new parameters in the DB.
     """
+    
     return 'Training the model'
 
 

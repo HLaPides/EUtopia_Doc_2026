@@ -41,6 +41,7 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import NearestNeighbors
 from flask import current_app
 
 # TODO: uncomment when DB tables exist
@@ -64,6 +65,8 @@ TARGET = "voter_turnout"
 # in-memory model state — populated by train() on first predict call
 _model  = None
 _scaler = None
+_knn    = None
+_df     = None
 
 
 # ============================================================
@@ -168,7 +171,7 @@ def train(data_path: str = None) -> dict:
             'n': int
         }
     """
-    global _model, _scaler
+    global _model, _scaler, _knn, _df
 
     if data_path is None:
         data_path = _get_csv_path()
@@ -186,6 +189,11 @@ def train(data_path: str = None) -> dict:
 
     X_b    = np.column_stack([np.ones(len(X_scaled)), X_scaled])
     _model = np.linalg.inv(X_b.T @ X_b) @ (X_b.T @ y)
+
+    # fit KNN on the full scaled dataset
+    _knn = NearestNeighbors(n_neighbors=1, metric='euclidean')
+    _knn.fit(X_scaled)
+    _df = df[['country', 'year', 'voter_turnout']].reset_index(drop=True)
 
     y_hat = X_b @ _model
     mse   = ((y_hat - y) ** 2).mean()
@@ -311,6 +319,36 @@ def predict(
 
     return float(input_vec @ _model)
 
+def find_similar_country(
+    compulsory_voting: int,
+    median_age: float,
+    national_turnout: float,
+    unemployment_rate: float,
+    population: float,
+    region_northern: int,
+    region_southern: int,
+    region_western: int,
+) -> dict:
+    global _knn, _scaler, _df
+
+    if _knn is None or _scaler is None:
+        train()
+
+    x_raw    = _engineer_features(
+        compulsory_voting, median_age, national_turnout,
+        unemployment_rate, population, region_northern,
+        region_southern, region_western
+    )
+    x_scaled = _scaler.transform(x_raw.reshape(1, -1))
+
+    distances, indices = _knn.kneighbors(x_scaled)
+    match = _df.iloc[indices[0][0]]
+
+    return {
+        'country': match['country'],
+        'year': int(match['year']),
+        'voter_turnout': round(float(match['voter_turnout']), 1)
+    }
 
 def predict_turnout(data: dict) -> float:
     """
@@ -337,4 +375,20 @@ def predict_turnout(data: dict) -> float:
         region_southern   = int(data.get("region_southern", 0)),
         region_western    = int(data.get("region_western", 0)),
     )
-    return round(max(0.0, min(100.0, prediction)), 2)
+
+    similar = find_similar_country(
+        compulsory_voting = int(data.get("compulsory_voting", 0)),
+        median_age        = float(data.get("median_age")),
+        national_turnout  = float(data.get("national_turnout")),
+        unemployment_rate = float(data.get("unemployment_rate")),
+        population        = float(data.get("population")),
+        region_northern   = int(data.get("region_northern", 0)),
+        region_southern   = int(data.get("region_southern", 0)),
+        region_western    = int(data.get("region_western", 0)),
+    )
+
+    return {
+        'predicted_turnout': round(max(0.0, min(100.0, prediction)), 2),
+        'similar_country': f"{similar['country']} ({similar['year']})",
+        'similar_country_turnout': similar['voter_turnout']
+    }

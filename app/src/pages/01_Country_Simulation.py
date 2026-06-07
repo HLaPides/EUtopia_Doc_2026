@@ -165,7 +165,11 @@ if st.button("Predict EU Election Turnout", type='primary', use_container_width=
 
     if response.status_code == 200:
         result = response.json()
-        predicted = result.get("predictedTurnout")
+        predicted = result.get("predicted_turnout")
+        similar = result.get("similar_country")
+        similar_turnout = result.get("similar_country_turnout")
+    
         st.success(f"Predicted EU Election Turnout for **{country_name}**: **{predicted:.1f}%**")
+        st.info(f"Your country most closely resembles **{similar}**, which had a voter turnout of **{similar_turnout}%**")
     else:
         st.error("Something went wrong with the prediction. Please try again.")

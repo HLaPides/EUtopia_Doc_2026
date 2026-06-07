@@ -205,9 +205,6 @@ def get_student_simulations(studentID):
 @api_bp.route("/ml/turnout-prediction", methods=["POST"])
 def turnout_prediction():
     data = request.get_json()
-    prediction = predict_turnout(data)
+    result = predict_turnout(data)
 
-    return jsonify({
-        "predictedTurnout": prediction,
-        "inputs": data
-    })
+    return jsonify(result)
