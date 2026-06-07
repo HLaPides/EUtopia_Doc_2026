@@ -24,16 +24,8 @@ Features:
                             in EU engagement not explained by the other features.
                             Eastern Europe averages around 20pp lower turnout than Western
 
-Model parameters and scaler values are stored in voter_turnout_params and
-voter_turnout_scaler tables in the DB. train() reads the CSV, fits the model,
-and writes the new parameters to the DB. predict() reads from the DB.
-
 Final performance: LOO-CV R2=0.7928, LOO-CV MSE=77.61
 
-ROUTES NEEDED (to be implemented in simulations_routes.py):
-  POST   /simulations/train        -> calls train(), admin only
-  GET    /simulations/test         -> calls test(), admin only
-  POST   /ml/turnout-prediction    -> calls predict_turnout() with JSON body
 """
 import os
 import json
@@ -73,16 +65,11 @@ COUNTRY_NAMES = {
 
 TARGET = "voter_turnout"
 
-# in-memory model state — populated by train() on first predict call
 _model  = None
 _scaler = None
 _knn    = None
 _df     = None
 
-
-# ============================================================
-# PRIVATE HELPERS
-# ============================================================
 
 def _get_csv_path() -> str:
     """
@@ -183,13 +170,6 @@ def _engineer_features(
     ])
 
 
-# ============================================================
-# PUBLIC FUNCTIONS
-# ============================================================
-
-# ROUTE: POST /simulations/train  (admin only)
-# Accepts an optional file upload path to retrain on new data.
-# Returns training metrics so the admin can verify the model improved.
 def train(data_path: str = None) -> dict:
     """
     Retrains the OLS model on the full dataset and writes the new
@@ -211,8 +191,6 @@ def train(data_path: str = None) -> dict:
     """
     global _model, _scaler, _knn, _df
 
-    #Raises:
-    #Exception: if DB writes fail, rolls back and re-raises.
 
     if data_path is None:
         data_path = _get_csv_path()
@@ -232,7 +210,6 @@ def train(data_path: str = None) -> dict:
     X_b = np.column_stack([np.ones(len(X_scaled)), X_scaled])
     b   = np.linalg.inv(X_b.T @ X_b) @ (X_b.T @ y)
 
-    # fit KNN on the full scaled dataset
     _knn = NearestNeighbors(n_neighbors=1, metric='euclidean')
     _knn.fit(X_scaled)
     _df = df[['country', 'year', 'voter_turnout']].reset_index(drop=True)

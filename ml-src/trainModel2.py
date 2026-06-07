@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
@@ -27,3 +28,5 @@ train_score = model.score(X_train, y_train)
 test_score = model.score(X_test, y_test)
 print(f"\nTraining Accuracy: {train_score:.3f}")
 print(f"Testing Accuracy:  {test_score:.3f}")
+print(f"\ncoef_vals: {json.dumps(model.coef_[0].tolist())}")
+print(f"intercept: {model.intercept_[0]}")

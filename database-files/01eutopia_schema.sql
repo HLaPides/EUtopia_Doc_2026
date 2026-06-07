@@ -207,3 +207,9 @@ CREATE TABLE IF NOT EXISTS voter_turnout_scaler (
     feature_means TEXT NOT NULL,
     feature_stds  TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS eu_trust_params (
+    sequence_number INT PRIMARY KEY,
+    coef_vals TEXT NOT NULL,
+    intercept FLOAT NOT NULL
+);
