@@ -59,15 +59,12 @@ FEATURES = [
 ]
 TARGET = "voter_turnout"
 
-<<<<<<< HEAD
 # in-memory model state — populated by train() on first predict call
 _model  = None
 _scaler = None
 _knn    = None
 _df     = None
 
-=======
->>>>>>> 95d244819ed2d57319c0bbce3ea7c0592d5bfe9b
 
 # ============================================================
 # PRIVATE HELPERS
@@ -216,6 +213,7 @@ def train(data_path: str = None) -> dict:
 
     scaler   = StandardScaler()
     X_scaled = scaler.fit_transform(X)
+    _scaler  = scaler
 
     X_b = np.column_stack([np.ones(len(X_scaled)), X_scaled])
     b   = np.linalg.inv(X_b.T @ X_b) @ (X_b.T @ y)
@@ -225,8 +223,8 @@ def train(data_path: str = None) -> dict:
     _knn.fit(X_scaled)
     _df = df[['country', 'year', 'voter_turnout']].reset_index(drop=True)
 
-    y_hat = X_b @ _model
     y_hat = X_b @ b
+    
     mse   = ((y_hat - y) ** 2).mean()
     r2    = 1 - mse / y.var()
 
@@ -269,7 +267,7 @@ def train(data_path: str = None) -> dict:
 # No inputs needed. Returns LOO-CV metrics so the admin can verify
 # model performance before deploying to students.
 def test() -> dict:
-   
+    """
     Runs LOO-CV on the full dataset and returns performance metrics.
     LOO-CV is used because the dataset is relatively small (184 observations)
     so a single train/test split would be unreliable.
@@ -281,6 +279,7 @@ def test() -> dict:
             'n':          int
         }
     """
+
     df = pd.read_csv(_get_csv_path())
     df["median_age_sq"]        = df["median_age"] ** 2
     df["national_turnout_sq"]  = df["national_turnout"] ** 2
@@ -325,7 +324,7 @@ def predict(
     region_western: int,
 ) -> float:
     """
-    '''Returns a single voter turnout prediction given the input features.
+    Returns a single voter turnout prediction given the input features.
     Reads model parameters and scaler values from the DB.
 
     Args:
@@ -342,7 +341,6 @@ def predict(
 
     Returns:
         float: predicted voter turnout (%)
-    '''
     """
     params      = _get_params()
     means, stds = _get_scaler_params()
@@ -391,7 +389,7 @@ def find_similar_country(
     }
 
 def predict_turnout(data: dict) -> float:
-    
+    """
     Dict-based wrapper around predict() for use by the Flask route.
     Accepts a JSON body dict, extracts and validates feature values,
     and returns a predicted turnout percentage clamped to [0, 100].
