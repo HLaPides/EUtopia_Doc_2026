@@ -13,8 +13,35 @@ st.set_page_config(layout='wide')
 SideBarLinks()
 
 BASE_URL = "http://web-api:4000"
+teacher_id = st.session_state['userID']
 
-lessons_resp = requests.get(f"{BASE_URL}/lessons").json()
+classes = requests.get(f"{BASE_URL}/classes/teacher/{teacher_id}").json()
+class_ids = [c["classID"] for c in classes]
+all_lessons = requests.get(f"{BASE_URL}/lessons").json()
+lessons = [l for l in all_lessons if l.get("classID") in class_ids]
+
+students = []
+for class_id in class_ids:
+    class_students = requests.get(f"{BASE_URL}/classes/{class_id}/students").json()
+    students.extend(class_students)
+
+student_progress = []
+for s in students:
+    progress = requests.get(f"{BASE_URL}/progress/{s['userID']}").json()
+    completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
+    total = len(progress)
+    pct = int((completed / total) * 100) if total > 0 else 0
+    avg_engagement = (
+        sum(float(p.get("avgEngagementTime", 0)) for p in progress) / total
+        if total > 0 else 0
+    )   
+    student_progress.append({
+        "name": f"{s['firstName']} {s['lastName']}",
+        "score": pct,
+        "engagement": round(avg_engagement, 1)
+    })
+
+student_progress.sort(key=lambda x: x["score"], reverse=True)
 
 st.title(f"Welcome Teacher, {st.session_state['first_name']}.")
 
@@ -22,11 +49,14 @@ st.title(f"Welcome Teacher, {st.session_state['first_name']}.")
 tab1, tab2, tab3 = st.tabs(["Top Performing Students", "Recent Lessons", "Student Engagement"])
 
 with tab1:
-    for name, score in [("Emma Johns", 92), ("Lucas Miller", 88), ("Sofia Rose", 84), ("Elena Garcia", 80), ("John Doe", 78)]:
-        col_name, col_pct, col_bar = st.columns([2, 1, 3])
-        col_name.write(name)
-        col_pct.write(f"{score}%")
-        col_bar.progress(score)
+    if student_progress:
+        for s in student_progress[:5]:
+            col_name, col_pct, col_bar = st.columns([2, 1, 3])
+            col_name.write(s["name"])
+            col_pct.write(f"{s['score']}%")
+            col_bar.progress(s["score"])
+    else:
+        st.write("No student data available.")
 
 with tab2:
     h1, h2, h3 = st.columns([3, 2, 2])
@@ -34,8 +64,8 @@ with tab2:
     h2.write("**Assigned**")
     h3.write("**Completed**")
 
-    if lessons_resp:
-        for lesson in lessons_resp:
+    if lessons:
+        for lesson in lessons:
             c1, c2, c3 = st.columns([3, 2, 2])
             c1.write(lesson.get("title", "N/A"))
             c2.write(str(lesson.get("createdAt", "N/A"))[:10])
@@ -44,11 +74,13 @@ with tab2:
         st.write("No lessons available.")
 
 with tab3:
-    df = pd.DataFrame({
-        "Student": ["Emma Johns", "Lucas Miller", "Sofia Rose", "Elena Garcia", "John Doe"],
-        "Engagement (%)": [95, 82, 78, 91, 70]
-    })
-    
-    fig = px.bar(df, x="Student", y="Engagement (%)", title="Student Engagement",
-                 color="Engagement (%)", color_continuous_scale="blues")
-    st.plotly_chart(fig, use_container_width=True)
+    if student_progress:
+        df = pd.DataFrame({
+            "Student": [s["name"] for s in student_progress],
+            "Avg Engagement Time (min)": [s["engagement"] for s in student_progress]
+        })
+        fig = px.bar(df, x="Student", y="Avg Engagement Time (min)", title="Student Engagement",
+                     color="Avg Engagement Time (min)", color_continuous_scale="blues")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.write("No engagement data available.")

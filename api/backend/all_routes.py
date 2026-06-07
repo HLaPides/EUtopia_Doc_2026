@@ -34,7 +34,7 @@ def get_user(userID):
 def get_roles():
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM Role")
+    cursor.execute("SELECT * FROM Roles")
     roles = cursor.fetchall()
     cursor.close()
     return jsonify(roles)
@@ -47,9 +47,9 @@ def get_user_roles(userID):
 
     cursor.execute(
         """
-        SELECT Role.roleID, Role.roleName
+        SELECT Roles.roleID, Roles.roleName
         FROM UserRole
-        JOIN Role ON UserRole.roleID = Role.roleID
+        JOIN Roles ON UserRole.roleID = Roles.roleID
         WHERE UserRole.userID = %s
         """,
         (userID,)
@@ -208,3 +208,134 @@ def turnout_prediction():
     result = predict_turnout(data)
 
     return jsonify(result)
+
+@api_bp.route("/classes", methods=["GET"])
+def get_classes():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM Class")
+    classes = cursor.fetchall()
+    cursor.close()
+    return jsonify(classes)
+
+
+@api_bp.route("/classes/<int:classID>", methods=["GET"])
+def get_class(classID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM Class WHERE classID = %s", (classID,))
+    cls = cursor.fetchone()
+    cursor.close()
+
+    if not cls:
+        return jsonify({"error": "class not found"}), 404
+
+    return jsonify(cls)
+
+
+@api_bp.route("/classes/teacher/<int:teacherID>", methods=["GET"])
+def get_teacher_classes(teacherID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM Class WHERE teacherID = %s", (teacherID,))
+    classes = cursor.fetchall()
+    cursor.close()
+    return jsonify(classes)
+
+
+@api_bp.route("/classes/<int:classID>/students", methods=["GET"])
+def get_class_students(classID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT u.userID, u.firstName, u.lastName, u.email
+        FROM StudentProfile sp
+        JOIN Users u ON sp.studentID = u.userID
+        WHERE sp.classID = %s
+    """, (classID,))
+    students = cursor.fetchall()
+    cursor.close()
+    return jsonify(students)
+
+
+@api_bp.route("/classes", methods=["POST"])
+def create_class():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Class (teacherID, className, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (
+            data["teacherID"],
+            data["className"],
+            data.get("createdBy"),
+            data.get("updatedBy"),
+        )
+    )
+
+    db.commit()
+    classID = cursor.lastrowid
+    cursor.close()
+
+    return jsonify({"message": "class created", "classID": classID}), 201
+
+
+@api_bp.route("/classes/<int:classID>", methods=["PUT"])
+def update_class(classID):
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        UPDATE Class
+        SET className = %s,
+            updatedBy = %s
+        WHERE classID = %s
+        """,
+        (
+            data["className"],
+            data.get("updatedBy"),
+            classID,
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "class updated"})
+
+
+@api_bp.route("/classes/<int:classID>", methods=["DELETE"])
+def delete_class(classID):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM Class WHERE classID = %s", (classID,))
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "class deleted"})
+
+@api_bp.route("/lessons/class/<int:classID>", methods=["GET"])
+def get_lessons_by_class(classID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM Lessons WHERE classID = %s", (classID,))
+    lessons = cursor.fetchall()
+    cursor.close()
+    return jsonify(lessons)
+
+@api_bp.route("/students/<int:studentID>/profile", methods=["GET"])
+def get_student_profile(studentID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM StudentProfile WHERE studentID = %s", (studentID,))
+    profile = cursor.fetchone()
+    cursor.close()
+
+    if not profile:
+        return jsonify({"error": "profile not found"}), 404
+
+    return jsonify(profile)

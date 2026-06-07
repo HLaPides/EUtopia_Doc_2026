@@ -13,13 +13,19 @@ SideBarLinks()
 BASE_URL = "http://web-api:4000"
 student_id = st.session_state['userID']
 
-lessons = requests.get(f"{BASE_URL}/lessons").json()
+profile = requests.get(f"{BASE_URL}/students/{student_id}/profile").json()
+class_id = profile.get("classID")
+class_info = requests.get(f"{BASE_URL}/classes/{class_id}").json()
+class_name = class_info.get("className", "Your Class")
+lessons = requests.get(f"{BASE_URL}/lessons/class/{class_id}").json()
 progress = requests.get(f"{BASE_URL}/progress/{student_id}").json()
-assessments = requests.get(f"{BASE_URL}/assessments").json()
+all_assessments = requests.get(f"{BASE_URL}/assessments").json()
+lesson_ids = {l["lessonID"] for l in lessons}
+assessments = [a for a in all_assessments if a.get("lessonID") in lesson_ids]
 
 st.title(f"Welcome Student, {st.session_state['first_name']}.")
 
-completed = len([p for p in progress if p.get("completionStatus") == "completed"])
+completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
 total = len(progress)
 lesson_pct = int((completed / total) * 100) if total > 0 else 0
 
@@ -27,41 +33,40 @@ col1, col2 = st.columns(2)
 col1.metric(label="Lesson Progress", value=f"{lesson_pct}%")
 col2.metric(label="Class Grade", value="80%")
 
-st.header("Topic: Public Policy")
+st.header(f"Class: {class_name}")
 
 st.write("## Quizzes")
-q1, q2, q3, q4 = st.columns(4)
-q1.subheader("Quiz 1: Section 1")
-q2.subheader("Quiz 2: Section 2")
-q3.subheader("Quiz 3: Section 3")
-q4.subheader("Quiz 4: Section 4")
-
-#when class routes are implemented
-# st.write("## Quizzes")
-# if assessments:
-#     cols = st.columns(4)
-#     for i, assessment in enumerate(assessments):
-#         cols[i % 4].write(assessment.get("assessmentName", f"Quiz {assessment['assessmentID']}"))
-# else:
-#     st.write("No quizzes available.")
+if assessments:
+    cards_html = """
+    <div style="display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;">
+    """
+    for assessment in assessments:
+        name = assessment.get("assessmentName", f"Quiz {assessment['assessmentID']}")
+        a_type = assessment.get("assessmentType", "")
+        cards_html += f"""
+        <div style="
+            min-width: 200px;
+            background-color: #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            flex-shrink: 0;
+            border: 1px solid #444;
+        ">
+            <div style="color: #ffffff; font-weight: bold; font-size: 16px; margin-bottom: 8px;">{name}</div>
+            <div style="color: #ffffff; font-size: 13px;">{a_type}</div>
+        </div>
+        """
+    cards_html += "</div>"
+    st.html(cards_html)
+else:
+    st.write("No quizzes available.")
 
 st.write("## Content")
-st.subheader("Section 1: Introduction to Public Policy")
-st.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-
-st.subheader("Section 2: EU Institutions")
-st.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-
-st.subheader("Section 3: Civic Engagement")
-st.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-
-#when class routes are implemented
-# st.write("## Content")
-# if lessons:
-#     for lesson in lessons:
-#         st.subheader(lesson["title"])
-#         st.caption(f"Topic: {lesson.get('topicName', 'N/A')} | Difficulty: {lesson.get('difficultyLevel', 'N/A')}")
-#         st.write(lesson.get("content", "No content available."))
-#         st.divider()
-# else:
-#     st.write("No lessons available.")
+if lessons:
+    for lesson in lessons:
+        st.subheader(lesson["title"])
+        st.caption(f"Topic: {lesson.get('topicName', 'N/A')} | Difficulty: {lesson.get('difficultyLevel', 'N/A')}")
+        st.write(lesson.get("content", "No content available."))
+        st.divider()
+else:
+    st.write("No lessons available.")
