@@ -24,23 +24,14 @@ Features:
                             in EU engagement not explained by the other features.
                             Eastern Europe averages around 20pp lower turnout than Western
 
-Model parameters and scaler values are stored in voter_turnout_params and
-voter_turnout_scaler tables in the DB. train() reads the CSV, fits the model,
-and writes the new parameters to the DB. predict() reads from the DB.
-
 Final performance: LOO-CV R2=0.7928, LOO-CV MSE=77.61
 
-ROUTES NEEDED (to be implemented in simulations_routes.py):
-  POST   /simulations/train        -> calls train(), admin only
-  GET    /simulations/test         -> calls test(), admin only
-  POST   /ml/turnout-prediction    -> calls predict_turnout() with JSON body
 """
 import os
 import json
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import NearestNeighbors
 from flask import current_app
 from backend.db_connection import get_db
 
@@ -57,27 +48,7 @@ FEATURES = [
     "region_southern",
     "region_western",
 ]
-
-COUNTRY_NAMES = {
-    'AT': 'Austria', 'BE': 'Belgium', 'BG': 'Bulgaria',
-    'CY': 'Cyprus', 'CZ': 'Czechia', 'DE': 'Germany',
-    'DK': 'Denmark', 'EE': 'Estonia', 'ES': 'Spain',
-    'FI': 'Finland', 'FR': 'France', 'GR': 'Greece',
-    'HR': 'Croatia', 'HU': 'Hungary', 'IE': 'Ireland',
-    'IT': 'Italy', 'LT': 'Lithuania', 'LU': 'Luxembourg',
-    'LV': 'Latvia', 'MT': 'Malta', 'NL': 'Netherlands',
-    'PL': 'Poland', 'PT': 'Portugal', 'RO': 'Romania',
-    'SE': 'Sweden', 'SI': 'Slovenia', 'SK': 'Slovakia',
-    'EL': 'Greece', 'GB': 'United Kingdom'
-}
-
 TARGET = "voter_turnout"
-
-# in-memory model state — populated by train() on first predict call
-_model  = None
-_scaler = None
-_knn    = None
-_df     = None
 
 
 # ============================================================
@@ -187,9 +158,9 @@ def _engineer_features(
 # PUBLIC FUNCTIONS
 # ============================================================
 
-# ROUTE: POST /simulations/train  (admin only)
+# ROUTE: POST /simulations/train  (EU official only)
 # Accepts an optional file upload path to retrain on new data.
-# Returns training metrics so the admin can verify the model improved.
+# Returns training metrics so the EU official can verify the model improved.
 def train(data_path: str = None) -> dict:
     """
     Retrains the OLS model on the full dataset and writes the new
@@ -208,12 +179,10 @@ def train(data_path: str = None) -> dict:
             'mse_train': float,
             'n': int
         }
+
+    Raises:
+        Exception: if DB writes fail, rolls back and re-raises.
     """
-    global _model, _scaler, _knn, _df
-
-    #Raises:
-    #Exception: if DB writes fail, rolls back and re-raises.
-
     if data_path is None:
         data_path = _get_csv_path()
 
@@ -227,18 +196,11 @@ def train(data_path: str = None) -> dict:
 
     scaler   = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    _scaler  = scaler
 
     X_b = np.column_stack([np.ones(len(X_scaled)), X_scaled])
     b   = np.linalg.inv(X_b.T @ X_b) @ (X_b.T @ y)
 
-    # fit KNN on the full scaled dataset
-    _knn = NearestNeighbors(n_neighbors=1, metric='euclidean')
-    _knn.fit(X_scaled)
-    _df = df[['country', 'year', 'voter_turnout']].reset_index(drop=True)
-
     y_hat = X_b @ b
-    
     mse   = ((y_hat - y) ** 2).mean()
     r2    = 1 - mse / y.var()
 
@@ -277,8 +239,8 @@ def train(data_path: str = None) -> dict:
     }
 
 
-# ROUTE: GET /simulations/test  (admin only)
-# No inputs needed. Returns LOO-CV metrics so the admin can verify
+# ROUTE: GET /simulations/test  (EU official only)
+# No inputs needed. Returns LOO-CV metrics so the EU official can verify
 # model performance before deploying to students.
 def test() -> dict:
     """
@@ -293,7 +255,6 @@ def test() -> dict:
             'n':          int
         }
     """
-
     df = pd.read_csv(_get_csv_path())
     df["median_age_sq"]        = df["median_age"] ** 2
     df["national_turnout_sq"]  = df["national_turnout"] ** 2
@@ -371,42 +332,13 @@ def predict(
     current_app.logger.info(f'voter_turnout_model.predict() -> {prediction:.2f}%')
     return prediction
 
-def find_similar_country(
-    compulsory_voting: int,
-    median_age: float,
-    national_turnout: float,
-    unemployment_rate: float,
-    population: float,
-    region_northern: int,
-    region_southern: int,
-    region_western: int,
-) -> dict:
-    global _knn, _scaler, _df
-
-    if _knn is None or _scaler is None:
-        train()
-
-    x_raw    = _engineer_features(
-        compulsory_voting, median_age, national_turnout,
-        unemployment_rate, population, region_northern,
-        region_southern, region_western
-    )
-    x_scaled = _scaler.transform(x_raw.reshape(1, -1))
-
-    distances, indices = _knn.kneighbors(x_scaled)
-    match = _df.iloc[indices[0][0]]
-
-    return {
-    'country': COUNTRY_NAMES.get(match['country'], match['country']),
-    'year': int(match['year']),
-    'voter_turnout': round(float(match['voter_turnout']), 1)
-    }
 
 def predict_turnout(data: dict) -> float:
     """
     Dict-based wrapper around predict() for use by the Flask route.
     Accepts a JSON body dict, extracts and validates feature values,
     and returns a predicted turnout percentage clamped to [0, 100].
+
     Args:
         data: dict with keys:
             compulsory_voting, median_age, national_turnout,
@@ -426,20 +358,4 @@ def predict_turnout(data: dict) -> float:
         region_southern   = int(data.get("region_southern", 0)),
         region_western    = int(data.get("region_western", 0)),
     )
-
-    similar = find_similar_country(
-        compulsory_voting = int(data.get("compulsory_voting", 0)),
-        median_age        = float(data.get("median_age")),
-        national_turnout  = float(data.get("national_turnout")),
-        unemployment_rate = float(data.get("unemployment_rate")),
-        population        = float(data.get("population")),
-        region_northern   = int(data.get("region_northern", 0)),
-        region_southern   = int(data.get("region_southern", 0)),
-        region_western    = int(data.get("region_western", 0)),
-    )
-
-    return {
-        'predicted_turnout': round(max(0.0, min(100.0, prediction)), 2),
-        'similar_country': f"{similar['country']} ({similar['year']})",
-        'similar_country_turnout': similar['voter_turnout']
-    }
+    return round(max(0.0, min(100.0, prediction)), 2)
