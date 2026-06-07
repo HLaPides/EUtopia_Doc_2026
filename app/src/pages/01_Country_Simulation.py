@@ -173,3 +173,5 @@ if st.button("Predict EU Election Turnout", type='primary', use_container_width=
         st.info(f"Your country most closely resembles **{similar}**, which had a voter turnout of **{similar_turnout}%**")
     else:
         st.error("Something went wrong with the prediction. Please try again.")
+        st.write(response.status_code)
+        st.write(response.text)
