@@ -57,6 +57,20 @@ FEATURES = [
     "region_southern",
     "region_western",
 ]
+
+COUNTRY_NAMES = {
+    'AT': 'Austria', 'BE': 'Belgium', 'BG': 'Bulgaria',
+    'CY': 'Cyprus', 'CZ': 'Czechia', 'DE': 'Germany',
+    'DK': 'Denmark', 'EE': 'Estonia', 'ES': 'Spain',
+    'FI': 'Finland', 'FR': 'France', 'GR': 'Greece',
+    'HR': 'Croatia', 'HU': 'Hungary', 'IE': 'Ireland',
+    'IT': 'Italy', 'LT': 'Lithuania', 'LU': 'Luxembourg',
+    'LV': 'Latvia', 'MT': 'Malta', 'NL': 'Netherlands',
+    'PL': 'Poland', 'PT': 'Portugal', 'RO': 'Romania',
+    'SE': 'Sweden', 'SI': 'Slovenia', 'SK': 'Slovakia',
+    'EL': 'Greece', 'GB': 'United Kingdom'
+}
+
 TARGET = "voter_turnout"
 
 # in-memory model state — populated by train() on first predict call
@@ -383,9 +397,9 @@ def find_similar_country(
     match = _df.iloc[indices[0][0]]
 
     return {
-        'country': match['country'],
-        'year': int(match['year']),
-        'voter_turnout': round(float(match['voter_turnout']), 1)
+    'country': COUNTRY_NAMES.get(match['country'], match['country']),
+    'year': int(match['year']),
+    'voter_turnout': round(float(match['voter_turnout']), 1)
     }
 
 def predict_turnout(data: dict) -> float:
