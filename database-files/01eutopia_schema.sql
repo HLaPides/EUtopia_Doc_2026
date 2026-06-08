@@ -19,6 +19,9 @@ DROP TABLE IF EXISTS UserRole;
 DROP TABLE IF EXISTS Role;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS PlatformPerformance;
+DROP TABLE IF EXISTS voter_turnout_scaler;
+DROP TABLE IF EXISTS voter_turnout_params;
+DROP TABLE IF EXISTS eu_trust_params;
 
 CREATE TABLE IF NOT EXISTS Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,15 +151,11 @@ CREATE TABLE IF NOT EXISTS Simulation (
     studentID INT NOT NULL,
     countryName VARCHAR(100),
     population BIGINT,
-    gdpPerCapita DECIMAL(12,2),
     unemploymentRate DECIMAL(5,2),
     compulsoryVoting BOOLEAN,
-    yearsMembership INT,
-    corruptionIndex DECIMAL(5,2),
-    urbanizationRate DECIMAL(5,2),
     medianAge DECIMAL(5,2),
-    netBeneficiary BOOLEAN,
-    weekendVoting BOOLEAN,
+    region VARCHAR(20),
+    nationalTurnout DECIMAL(5,2),
     predictedTurnout DECIMAL(5,2),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     createdBy INT,
@@ -169,11 +168,9 @@ CREATE TABLE IF NOT EXISTS DiagnosticSurvey (
     surveyID INT AUTO_INCREMENT PRIMARY KEY,
     studentID INT NOT NULL,
     lessonID INT,
-    age INT,
     educationLevel VARCHAR(100),
-    gender VARCHAR(50),
-    politicalInterest VARCHAR(100),
-    trustNationalParliament DECIMAL(5,2),
+    politicalAffiliation VARCHAR(100),
+    trustEuroParliament DECIMAL(5,2),
     trustPoliticians DECIMAL(5,2),
     satisfactionDemocracy DECIMAL(5,2),
     predictedTrust DECIMAL(5,2),
