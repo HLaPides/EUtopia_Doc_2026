@@ -79,8 +79,27 @@ with tab3:
             "Student": [s["name"] for s in student_progress],
             "Avg Engagement Time (min)": [s["engagement"] for s in student_progress]
         })
-        fig = px.bar(df, x="Student", y="Avg Engagement Time (min)", title="Student Engagement",
-                     color="Avg Engagement Time (min)", color_continuous_scale="blues")
+        df = df.sort_values("Avg Engagement Time (min)", ascending=True)
+
+        fig = px.bar(
+            df,
+            x="Avg Engagement Time (min)",
+            y="Student",
+            orientation="h",
+            title="Student Engagement",
+            text="Avg Engagement Time (min)",
+        )
+        fig.update_traces(
+            marker_color="#2c7bb6",
+            texttemplate="%{text:.0f} min",
+            textposition="outside"
+        )
+        fig.update_layout(
+            height=max(300, len(df) * 40),
+            xaxis=dict(range=[0, df["Avg Engagement Time (min)"].max() * 1.2]),
+            plot_bgcolor="white",
+            showlegend=False,
+        )
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.write("No engagement data available.")
