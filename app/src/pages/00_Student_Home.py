@@ -25,7 +25,7 @@ assessments = [a for a in all_assessments if a.get("lessonID") in lesson_ids]
 
 st.title(f"Welcome Student, {st.session_state['first_name']}.")
 
-completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
+completed = len([p for p in progress if p.get("completionStatus") == "completed"])
 total = len(progress)
 lesson_pct = int((completed / total) * 100) if total > 0 else 0
 
@@ -46,14 +46,14 @@ if assessments:
         cards_html += f"""
         <div style="
             min-width: 200px;
-            background-color: #1e1e2e;
+            background-color: #B3B5D0;
             border-radius: 12px;
             padding: 20px;
             flex-shrink: 0;
             border: 1px solid #444;
         ">
-            <div style="color: #ffffff; font-weight: bold; font-size: 16px; margin-bottom: 8px;">{name}</div>
-            <div style="color: #ffffff; font-size: 13px;">{a_type}</div>
+            <div style="color: #1e1e2e; font-weight: bold; font-size: 16px; margin-bottom: 8px;">{name}</div>
+            <div style="color: #1e1e2e; font-size: 13px;">{a_type}</div>
         </div>
         """
     cards_html += "</div>"

@@ -201,6 +201,38 @@ def get_student_simulations(studentID):
     cursor.close()
     return jsonify(simulations)
 
+@api_bp.route("/simulations", methods=["POST"])
+def create_simulation():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Simulation
+        (studentID, countryName, population, unemploymentRate, compulsoryVoting,
+        medianAge, region, nationalTurnout, predictedTurnout, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("countryName"),
+            data.get("population"),
+            data.get("unemploymentRate"),
+            data.get("compulsoryVoting"),
+            data.get("medianAge"),
+            data.get("region"),
+            data.get("nationalTurnout"),
+            data.get("predictedTurnout"),
+            data.get("studentID"),
+            data.get("studentID"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "simulation saved"}), 201
+
 
 @api_bp.route("/ml/turnout-prediction", methods=["POST"])
 def turnout_prediction():
@@ -339,3 +371,30 @@ def get_student_profile(studentID):
         return jsonify({"error": "profile not found"}), 404
 
     return jsonify(profile)
+
+@api_bp.route("/survey", methods=["POST"])
+def submit_survey():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO DiagnosticSurvey
+        (studentID, educationLevel, politicalAffiliation, trustEuroParliament,
+        trustPoliticians, satisfactionDemocracy)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("educationLevel"),
+            data.get("politicalAffiliation"),
+            data.get("trustEuroParliament"),
+            data.get("trustPoliticians"),
+            data.get("satisfactionDemocracy"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "survey submitted"}), 201

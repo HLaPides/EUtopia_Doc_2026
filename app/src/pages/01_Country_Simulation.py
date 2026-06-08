@@ -16,162 +16,138 @@ SideBarLinks()
 
 BASE_URL = "http://web-api:4000"
 
+student_id = st.session_state['userID']
+simulations = requests.get(f"{BASE_URL}/simulations/{student_id}").json()
+
+
 # set the header of the page
 st.header('Build Your Own Country')
 
 # You can access the session state to make a more customized/personalized app experience
 st.write('### Fill in the values to predict EU Election Turnout for your created country')
 
-col1, col2 = st.columns(2)
+tab1, tab2, tab3 = st.tabs(["Guided Simulation", "Custom Simulation", "Your Simulations"])
 
-with col1:
-    country_name = st.text_input(
-        label='Name your Country:',
-        type = "default",
-        placeholder = "Country Name",
-        key="country_name",
-        help="Give your made up country a unique name."
-    )
+#tab1 will be what Gerber said where each input is presented one at a time, more teaching than exploration
 
-with col2:
-    corruption_index = st.slider(
-        label='Corruption Index:',
-        min_value=0,
-        max_value=100,
-        value=35,
-        step=1,
-        format="%.1f",
-        key="corruption_index",
-        help="Corruption in politicians, or other related political institutions."
-    )
+#User can fill in all values in a single screen (selecting a country profile to use as base w.i.p)
+with tab2:
+    col1, col2 = st.columns(2)
 
-col3, col4 = st.columns(2)
+    with col1:
+        country_name = st.text_input(
+            label='Name your Country:',
+            type = "default",
+            placeholder = "Country Name",
+            key="country_name",
+            help="Give your made up country a unique name."
+        )
 
-with col3:
-     #maybe a better way to input this than increment by 1
-    population = st.number_input(
-        label='Population:',
-        value = 5000000,
-        key="population",
-        help="The total population of the country."
-    )
+    with col2:
+        population = st.number_input(
+            label='Population:',
+            value = 5000000,
+            key="population",
+            help="The total population of the country."
+        )
 
-with col4:
-    urbanization_rate = st.slider(
-        label='Urbanization Rate:',
-        min_value=0,
-        max_value=100,
-        value=60,
-        step=1,
-        format="%.1f",
-        key="urbanization_rate",
-        help="The rate of urbanization of the country."
-    )
+    col5, col6 = st.columns(2)
 
-col5, col6 = st.columns(2)
+    with col5:
+        median_age = st.number_input(
+            label='Median Age:',
+            value = 46,
+            key="median_age",
+            help="Median age of the country's population"
+        )
 
-with col5:
-    #maybe a better way to input this than increment by 1
-    gdp = st.number_input(
-        label='GDP Per Capita (in euros):',
-        value = 340000,
-        key="gdp",
-        help="GDP Per Capita of the country"
-    )
+    with col6:
+        unemployment_rate = st.slider(
+            label='Unemployment Rate:',
+            min_value=0,
+            max_value=100,
+            value=24,
+            step=1,
+            format="%.1f",
+            key="unemployment_rate",
+            help="Rate of unemployment"
+        )
 
-with col6:
-    median_age = st.number_input(
-        label='Median Age:',
-        value = 46,
-        key="median_age",
-        help="Median age of the country's population"
-    )
+    col9, col10 = st.columns(2)
 
-col7, col8 = st.columns(2)
+    with col9:
+        compulsory_voting = st.radio(
+            label='Compulsory Voting:',
+            options= ["Yes", "No"],
+            key="compulsory_voting",
+            help="Is voting mandatory for eligible citizens in the country?"
+        )
 
-with col7:
-    unemployment_rate = st.slider(
-        label='Unemployment Rate:',
-        min_value=0,
-        max_value=100,
-        value=24,
-        step=1,
-        format="%.1f",
-        key="unemployment_rate",
-        help="Rate of unemployment"
-    )
+    with col10:
+        region = st.selectbox(
+            label="Country Region",
+            options=["Northern", "Southern", "Western", "Eastern"],
+            key="region",
+            help="What region in Europe is your country located?"
+        )
 
-with col8:
-    net_beneficiary = st.radio(
-        label='Net Beneficiary:',
-        options= ["Yes", "No"],
-        key="net_beneficiary",
-        help="Does the country receive more benefit from being in the EU than it contributes?"
-    )
+    col11, col12 = st.columns(2)
 
-col9, col10 = st.columns(2)
+    with col11:
+        nat_election_turnout = st.slider(
+            label='National Election Turnout:',
+            min_value=0,
+            max_value=100,
+            value=45,
+            step=1,
+            format="%.1f",
+            key="nat_election_turnout",
+            help="The election turnout of voters for national votes."
+        )
 
-with col9:
-    compulsory_voting = st.radio(
-        label='Compulsory Voting:',
-        options= ["Yes", "No"],
-        key="compulsory_voting",
-        help="Is voting mandatory for eligible citizens in the country?"
-    )
+    if st.button("Predict EU Election Turnout", type='primary', use_container_width=True):
+        payload = {
+            "compulsory_voting": 1 if compulsory_voting == "Yes" else 0,
+            "median_age": median_age,
+            "national_turnout": nat_election_turnout,
+            "unemployment_rate": unemployment_rate,
+            "population": population,
+            "region_northern": 1 if region == "Northern" else 0,
+            "region_southern": 1 if region == "Southern" else 0,
+            "region_western": 1 if region == "Western" else 0,
+        }
 
-with col10:
-    weekend_voting = st.radio(
-        label='Weekend Voting: ',
-        options= ["Yes", "No"],
-        key="weekend_voting",
-        help="Are citizens able to vote on the weekends?"
-    )
+        response = requests.post(f"{BASE_URL}/ml/turnout-prediction", json=payload)
 
-col11, col12 = st.columns(2)
+        if response.status_code == 200:
+            result = response.json()
+            predicted = result.get("predicted_turnout")
+            similar = result.get("similar_country")
+            similar_turnout = result.get("similar_country_turnout")
+        
+            st.success(f"Predicted EU Election Turnout for **{country_name}**: **{predicted:.1f}%**")
+            st.info(f"Your country most closely resembles **{similar}**, which had a voter turnout of **{similar_turnout}%**")
+        else:
+            st.error("Something went wrong with the prediction. Please try again.")
+            st.write(response.status_code)
+            st.write(response.text)
 
-with col11:
-    years_in_eu = st.number_input(
-        label='Years in EU:',
-        value = 10,
-        key="years_in_eu",
-        help="How long the country has been part of the EU."
-    )
+#User can see their past simulations
+with tab3:
+    if simulations:
+        st.write("### Your Past Simulations")
+        for sim in simulations:
+            with st.expander(f"🌍 {sim.get('countryName', 'Unknown')}"):
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Predicted Turnout", f"{sim.get('predictedTurnout', 'N/A')}%")
+                col2.metric("National Turnout", f"{sim.get('nationalTurnout', 'N/A')}%")
+                col3.metric("Unemployment Rate", f"{sim.get('unemploymentRate', 'N/A')}%")
 
-with col12:
-    nat_election_turnout = st.slider(
-        label='National Election Turnout:',
-        min_value=0,
-        max_value=100,
-        value=45,
-        step=1,
-        format="%.1f",
-        key="nat_election_turnout",
-        help="The election turnout of voters for national votes."
-    )
+                col4, col5, col6 = st.columns(3)
+                col4.metric("Population", f"{sim.get('population', 'N/A'):,}")
+                col5.metric("Median Age", sim.get('medianAge', 'N/A'))
+                col6.metric("Region", sim.get('region', 'N/A'))
 
-if st.button("Predict EU Election Turnout", type='primary', use_container_width=True):
-    payload = {
-        "compulsory_voting": 1 if compulsory_voting == "Yes" else 0,
-        "median_age": median_age,
-        "national_turnout": nat_election_turnout,
-        "unemployment_rate": unemployment_rate,
-        "population": population,
-        "region_northern": 0,
-        "region_southern": 0,
-        "region_western": 0,
-    }
-
-    response = requests.post(f"{BASE_URL}/ml/turnout-prediction", json=payload)
-
-    if response.status_code == 200:
-        result = response.json()
-        predicted = result.get("predicted_turnout")
-        similar = result.get("similar_country")
-        similar_turnout = result.get("similar_country_turnout")
-    
-        st.success(f"Predicted EU Election Turnout for **{country_name}**: **{predicted:.1f}%**")
-        st.info(f"Your country most closely resembles **{similar}**, which had a voter turnout of **{similar_turnout}%**")
+                st.write(f"**Compulsory Voting:** {'Yes' if sim.get('compulsoryVoting') else 'No'}")
     else:
-        st.error("Something went wrong with the prediction. Please try again.")
-        st.write(response.status_code)
-        st.write(response.text)
+        st.write("You haven't run any simulations yet. Try the Custom Simulation tab!")
