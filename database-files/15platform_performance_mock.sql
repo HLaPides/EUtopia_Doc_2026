@@ -1,3 +1,5 @@
+USE eutopia_db;
+
 INSERT INTO PlatformPerformance (performanceID, numActiveUsers, completionRates, numLessonsCreated, numLessonsApproved, createdBy, updatedBy)
 VALUES
   (1, 28, 81.85, 35, 81, 3, 3),
