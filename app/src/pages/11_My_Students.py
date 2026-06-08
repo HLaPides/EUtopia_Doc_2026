@@ -1,33 +1,65 @@
 import logging
-
 logger = logging.getLogger(__name__)
 
 import streamlit as st
-from modules.nav import SideBarLinks
+import pandas as pd
 import requests
+from modules.nav import SideBarLinks
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout='wide')
 
-# Display the appropriate sidebar links for the role of the logged in user
 SideBarLinks()
 
-st.title("Prediction with Regression")
+if not st.session_state.get('authenticated'):
+    st.switch_page('Home.py')
 
-# create a 2 column layout
+BASE_URL = "http://web-api:4000"
+teacher_id = st.session_state['userID']
+
+st.title("My Students")
+
+try:
+    classes = requests.get(f"{BASE_URL}/classes/teacher/{teacher_id}").json()
+    class_ids = [c["classID"] for c in classes]
+    class_names = {c["classID"]: c["className"] for c in classes}
+except Exception:
+    st.error("Could not load class data.")
+    st.stop()
+
+students = []
+for class_id in class_ids:
+    try:
+        class_students = requests.get(f"{BASE_URL}/classes/{class_id}/students").json()
+        for s in class_students:
+            s["className"] = class_names.get(class_id, "")
+        students.extend(class_students)
+    except Exception:
+        continue
+
+seen = set()
+unique_students = []
+for s in students:
+    if s['userID'] not in seen:
+        seen.add(s['userID'])
+        unique_students.append(s)
+
+if not unique_students:
+    st.info("No students found in your classes.")
+    st.stop()
+
 col1, col2 = st.columns(2)
+col1.metric("Total Students", len(unique_students))
+col2.metric("Classes", len(class_ids))
 
-# add one number input for variable 1 into column 1
-with col1:
-    var_01 = st.number_input("Variable 01:", step=1)
+st.divider()
 
-# add another number input for variable 2 into column 2
-with col2:
-    var_02 = st.number_input("Variable 02:", step=1)
+df = pd.DataFrame([{
+    "Name":    f"{s['firstName']} {s['lastName']}",
+    "Email":   s.get("email", ""),
+    "Class":   s.get("className", ""),
+} for s in unique_students])
 
-# add a button to use the values entered into the number field to send to the
-# prediction function via the REST API
-if st.button("Calculate Prediction", type="primary", use_container_width=True):
-    logger.info(f"var_01 = {var_01}, var_02 = {var_02}")
-    results = requests.get(f"http://web-api:4000/prediction/{var_01}/{var_02}")
-    json_results = results.json()
-    st.dataframe(json_results)
+df = df.sort_values("Class").reset_index(drop=True)
+df.index += 1
+
+st.dataframe(df, use_container_width=True)

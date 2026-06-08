@@ -1,65 +1,103 @@
 import logging
 logger = logging.getLogger(__name__)
+
 import streamlit as st
 import pandas as pd
-from sklearn import datasets
-from sklearn.ensemble import RandomForestClassifier
+import requests
 from modules.nav import SideBarLinks
 
 st.set_page_config(layout='wide')
 
 SideBarLinks()
 
-st.write("""
-# Simple Iris Flower Prediction App
+# redirect if not logged in
+if not st.session_state.get('authenticated'):
+    st.switch_page('Home.py')
 
-This example is borrowed from [The Data Professor](https://github.com/dataprofessor/streamlit_freecodecamp/tree/main/app_7_classification_iris)
-         
-This app predicts the **Iris flower** type!
-""")
+BASE_URL = "http://web-api:4000"
+teacher_id = st.session_state['userID']
 
-st.sidebar.header('User Input Parameters')
+st.title(f"Analytics")
+st.write(f"Student performance across your classes.")
 
-# Below, different user inputs are defined.  When you view the UI, 
-# notice that they are in the sidebar. 
-def user_input_features():
-    sepal_length = st.sidebar.slider('Sepal length', 4.3, 7.9, 5.4)
-    sepal_width = st.sidebar.slider('Sepal width', 2.0, 4.4, 3.4)
-    petal_length = st.sidebar.slider('Petal length', 1.0, 6.9, 1.3)
-    petal_width = st.sidebar.slider('Petal width', 0.1, 2.5, 0.2)
-    data = {'sepal_length': sepal_length,
-            'sepal_width': sepal_width,
-            'petal_length': petal_length,
-            'petal_width': petal_width}
-    features = pd.DataFrame(data, index=[0])
-    return features
+# ── fetch data ────────────────────────────────────────────────────────────────
+try:
+    classes = requests.get(f"{BASE_URL}/classes/teacher/{teacher_id}").json()
+    class_ids = [c["classID"] for c in classes]
+except Exception as e:
+    st.error("Could not load class data.")
+    st.stop()
 
-# get a data frame with the input features from the user
-df = user_input_features()
+students = []
+for class_id in class_ids:
+    try:
+        class_students = requests.get(f"{BASE_URL}/classes/{class_id}/students").json()
+        students.extend(class_students)
+    except Exception:
+        continue
 
-# show the exact values the user entered in a table.
-st.subheader('User Input parameters')
-st.write(df)
+# deduplicate students in case they appear in multiple classes
+seen = set()
+unique_students = []
+for s in students:
+    if s['userID'] not in seen:
+        seen.add(s['userID'])
+        unique_students.append(s)
 
-# load the standard iris dataset and generate a 
-# random forest classifier 
-iris = datasets.load_iris()
-X = iris.data
-Y = iris.target
-clf = RandomForestClassifier()
+if not unique_students:
+    st.info("No students found in your classes.")
+    st.stop()
 
-# fit the model
-clf.fit(X, Y)
+# ── build analytics rows ──────────────────────────────────────────────────────
+rows = []
+for s in unique_students:
+    try:
+        progress = requests.get(f"{BASE_URL}/progress/{s['userID']}").json()
+    except Exception:
+        progress = []
 
-# use the values entered by the user for prediction
-prediction = clf.predict(df)
-prediction_proba = clf.predict_proba(df)
+    total     = len(progress)
+    completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
 
-st.subheader('Class labels and their corresponding index number')
-st.write(iris.target_names)
+    completion_pct = round((completed / total) * 100, 1) if total > 0 else 0
+    avg_quiz       = round(
+        sum(float(p.get("quizPerformance", 0)) for p in progress) / total, 1
+    ) if total > 0 else 0
 
-st.subheader('Prediction')
-st.write(iris.target_names[prediction])
+    rows.append({
+        "Student":        f"{s['firstName']} {s['lastName']}",
+        "Lessons Assigned": total,
+        "Lessons Completed": completed,
+        "Completion %":   completion_pct,
+        "Avg Quiz Score": avg_quiz,
+    })
 
-st.subheader('Prediction Probability')
-st.write(prediction_proba)
+df = pd.DataFrame(rows).sort_values("Completion %", ascending=False).reset_index(drop=True)
+df.index += 1
+
+# ── summary metrics ───────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Students", len(df))
+col2.metric("Avg Completion %", f"{df['Completion %'].mean():.1f}%")
+col3.metric("Avg Quiz Score", f"{df['Avg Quiz Score'].mean():.1f}")
+
+st.divider()
+
+# ── table ─────────────────────────────────────────────────────────────────────
+st.subheader("Student Performance")
+st.dataframe(
+    df,
+    use_container_width=True,
+    column_config={
+        "Completion %": st.column_config.ProgressColumn(
+            "Completion %",
+            min_value=0,
+            max_value=100,
+            format="%d%%",
+        ),
+        "Avg Quiz Score": st.column_config.NumberColumn(
+            "Avg Quiz Score",
+            format="%.1f",
+        ),
+    }
+)
