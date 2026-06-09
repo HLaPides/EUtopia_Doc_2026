@@ -36,20 +36,10 @@ if st.button("Run Test", type="secondary", use_container_width=True):
             st.error(f"Error: {e}")
 
 st.divider()
-
-# ── Train ─────────────────────────────────────────────────────────────────────
-st.subheader("Retrain Model")
-st.write("Refits the model on the full Eurobarometer dataset and writes new weights to the database.")
-
-if st.button("Retrain Model", type="primary", use_container_width=True):
-    with st.spinner("Retraining..."):
-        try:
-            response = requests.post(f"{BASE_URL}/ml/eu-trust/train")
-            result   = response.json()
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Train Accuracy", f"{result.get('train_accuracy') * 100:.1f}%")
-            col2.metric("Test Accuracy",  f"{result.get('test_accuracy') * 100:.1f}%")
-            col3.metric("N",              result.get("n"))
-            st.success("Model retrained successfully. New weights saved to database.")
-        except Exception as e:
-            st.error(f"Error: {e}")
+st.subheader("Model Features")
+try:
+    features = requests.get(f"{BASE_URL}/ml/eu-trust/features").json().get("features", [])
+    for f in features:
+        st.write(f"• {f}")
+except Exception as e:
+    st.error(f"Could not load features: {e}")

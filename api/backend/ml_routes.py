@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, current_app
-from backend.ml_models.voter_turnout_model import train as vt_train, test as vt_test
-from backend.ml_models.eu_trust_model import train as trust_train, test as trust_test
+from backend.ml_models.voter_turnout_model import train as vt_train, test as vt_test, FEATURES as vt_features
+from backend.ml_models.eu_trust_model import train as trust_train, test as trust_test, FEATURES as trust_features
 
 ml_bp = Blueprint("ml", __name__)
+
+#Currently contains test/train features that should only be accessible via eu official
 
 
 # ── Voter Turnout Model ───────────────────────────────────────────────────────
@@ -51,3 +53,17 @@ def test_eu_trust():
     except Exception as e:
         current_app.logger.error(f"eu trust test error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+# ── Features ──────────────────────────────────────────────────────────────────
+
+@ml_bp.route("/ml/voter-turnout/features", methods=["GET"])
+def get_voter_turnout_features():
+    current_app.logger.info("GET /ml/voter-turnout/features")
+    return jsonify({"features": vt_features}), 200
+
+
+@ml_bp.route("/ml/eu-trust/features", methods=["GET"])
+def get_eu_trust_features():
+    current_app.logger.info("GET /ml/eu-trust/features")
+    return jsonify({"features": trust_features}), 200
