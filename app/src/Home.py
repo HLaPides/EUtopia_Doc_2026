@@ -119,6 +119,6 @@ with col2:
             st.session_state['role'] = 'eu_official'
             st.session_state['first_name'] = selected_official['firstName']
             st.session_state['userID'] = selected_official['userID']
-            st.switch_page('pages/20_Admin_Home.py')
+            st.switch_page('pages/20_EU_Official_Home.py')
         else:
             st.warning("Please select an EU official first.")

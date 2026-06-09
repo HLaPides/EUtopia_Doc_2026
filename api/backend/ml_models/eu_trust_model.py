@@ -62,7 +62,13 @@ def _load_dataset() -> pd.DataFrame:
     if not rows:
         raise ValueError("No training data found in eurobarometer_dataset.")
 
-    return pd.DataFrame(rows).dropna()
+    df = pd.DataFrame(rows).dropna()
+
+    for col in df.columns:
+        if col != 'country':
+            df[col] = df[col].astype(float)
+
+    return df
 
 
 def _get_params() -> tuple[np.ndarray, float]:

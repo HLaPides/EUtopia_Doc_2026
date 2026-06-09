@@ -96,6 +96,9 @@ def _load_dataset() -> pd.DataFrame:
         raise ValueError("No training data found in eu_turnout_dataset.")
 
     df = pd.DataFrame(rows)
+    for col in df.columns:
+        if col != 'country':
+            df[col] = df[col].astype(float)
     df["median_age_sq"]        = df["median_age"] ** 2
     df["national_turnout_sq"]  = df["national_turnout"] ** 2
     df["compulsory_x_western"] = df["compulsory_voting"] * df["region_western"]
