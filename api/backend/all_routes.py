@@ -60,7 +60,7 @@ def get_user_roles(userID):
     return jsonify(roles)
 
 
-@api_bp.route("/lessons", methods=["GET"])
+@api_bp.route("/lessons", methods=["GET"]) # retrieve all lessons in database.
 def get_lessons():
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -70,7 +70,7 @@ def get_lessons():
     return jsonify(lessons)
 
 
-@api_bp.route("/lessons/<int:lessonID>", methods=["GET"])
+@api_bp.route("/lessons/<int:lessonID>", methods=["GET"]) # retrieve specific lesson by its ID
 def get_lesson(lessonID):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -84,7 +84,7 @@ def get_lesson(lessonID):
     return jsonify(lesson)
 
 
-@api_bp.route("/lessons", methods=["POST"])
+@api_bp.route("/lessons", methods=["POST"])# create new lesson. posts as pending
 def create_lesson():
     data = request.get_json()
     db = get_db()
@@ -117,7 +117,7 @@ def create_lesson():
     return jsonify({"message": "lesson created", "lessonID": lessonID}), 201
 
 
-@api_bp.route("/lessons/<int:lessonID>", methods=["PUT"])
+@api_bp.route("/lessons/<int:lessonID>", methods=["PUT"])  #update an existing lesson / allow for modifications
 def update_lesson(lessonID):
     data = request.get_json()
     db = get_db()
@@ -151,7 +151,7 @@ def update_lesson(lessonID):
     return jsonify({"message": "lesson updated"})
 
 
-@api_bp.route("/lessons/<int:lessonID>", methods=["DELETE"])
+@api_bp.route("/lessons/<int:lessonID>", methods=["DELETE"])# remove a lesson. only doable by eu official
 def delete_lesson(lessonID):
     db = get_db()
     cursor = db.cursor()
@@ -339,3 +339,75 @@ def get_student_profile(studentID):
         return jsonify({"error": "profile not found"}), 404
 
     return jsonify(profile)
+
+
+@api_bp.route("/lessons/pending", methods=["GET"])
+def get_pending_lessons():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            L.lessonID,
+            L.teacherID,
+            CONCAT(U.firstName, ' ', U.lastName) AS teacherName,
+            L.title,
+            L.content,
+            L.difficultyLevel,
+            L.approvalStatus
+        FROM Lessons L
+        LEFT JOIN Users U
+            ON L.teacherID = U.userID
+        WHERE L.approvalStatus = 'Pending'
+    """)
+
+    lessons = cursor.fetchall()
+    cursor.close()
+
+    return jsonify(lessons)
+
+#approve a lesson. record which eu official approved it. pending to approved.
+@api_bp.route("/lessons/<int:lessonID>/approve", methods=["PUT"]) 
+def approve_lesson(lessonID):
+    data = request.get_json()
+    officialID = data["officialID"]
+
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        UPDATE Lessons
+        SET approvalStatus = 'Approved',
+            approvedBy = %s,
+            updatedBy = %s
+        WHERE lessonID = %s
+        """,
+        (officialID, officialID, lessonID)
+    )
+    db.commit()
+    cursor.close()
+
+    return jsonify({"message": "lesson approved"})
+
+#reject a lesson. record which eu official reviewed it. pending to rejected.
+@api_bp.route("/lessons/<int:lessonID>/reject", methods=["PUT"])
+def reject_lesson(lessonID):
+    data = request.get_json()
+    officialID = data["officialID"]
+
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        UPDATE Lessons
+        SET approvalStatus = 'Rejected',
+            approvedBy = %s,
+            updatedBy = %s
+        WHERE lessonID = %s
+        """,
+        (officialID, officialID, lessonID)
+    )
+    db.commit()
+    cursor.close()
+
+    return jsonify({"message": "lesson rejected"})

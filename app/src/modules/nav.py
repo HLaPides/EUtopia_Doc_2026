@@ -66,6 +66,10 @@ def voter_turnout_nav():
 def eu_trust_nav():
     st.sidebar.page_link("pages/22_EU_Trust_Admin.py", label="EU Trust Model Admin", icon="🇪🇺")
 
+def lesson_approval_nav():
+    st.sidebar.page_link("pages/23_Lesson_Approval.py",label="Lesson Approval",icon="⚖️")
+
+
 # ---- Sidebar assembly -------------------------------------------------------
 
 def SideBarLinks(show_home=False):
@@ -100,6 +104,7 @@ def SideBarLinks(show_home=False):
 
         if st.session_state["role"] == "eu_official":
             eu_official_home_nav()
+            lesson_approval_nav()
             voter_turnout_nav()
             eu_trust_nav()
             
