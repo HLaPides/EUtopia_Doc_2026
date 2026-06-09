@@ -341,30 +341,21 @@ def get_student_profile(studentID):
     return jsonify(profile)
 
 
-@api_bp.route("/lessons/pending", methods=["GET"])
+@api_bp.route("/lessons/pending", methods=["GET"]) #get all pending lessons.
 def get_pending_lessons():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT
-            L.lessonID,
-            L.teacherID,
-            CONCAT(U.firstName, ' ', U.lastName) AS teacherName,
-            L.title,
-            L.content,
-            L.difficultyLevel,
-            L.approvalStatus
-        FROM Lessons L
-        LEFT JOIN Users U
-            ON L.teacherID = U.userID
-        WHERE L.approvalStatus = 'Pending'
-    """)
-
+        SELECT L.lessonID, L.teacherID, CONCAT(U.firstName, ' ', U.lastName) AS teacherName,
+               L.title,L.content,L.difficultyLevel,L.approvalStatus
+        FROM Lessons L LEFT JOIN Users U ON L.teacherID = U.userID
+        WHERE L.approvalStatus = 'Pending'""")
     lessons = cursor.fetchall()
     cursor.close()
 
     return jsonify(lessons)
+
 
 #approve a lesson. record which eu official approved it. pending to approved.
 @api_bp.route("/lessons/<int:lessonID>/approve", methods=["PUT"]) 
