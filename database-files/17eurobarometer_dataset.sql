@@ -1,3 +1,4 @@
+USE eutopia_db;
 
 INSERT INTO eurobarometer_dataset
   (country, age, education, gender, political_interest,

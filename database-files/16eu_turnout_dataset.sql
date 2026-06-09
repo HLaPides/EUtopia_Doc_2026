@@ -1,3 +1,5 @@
+USE eutopia_db;
+
 INSERT INTO eu_turnout_dataset
   (country, year, voter_turnout, population, gdp_per_capita, unemployment_rate,
    compulsory_voting, years_eu_membership, urbanization_rate, median_age,
