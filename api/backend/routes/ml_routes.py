@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, current_app
-from backend.ml_models.voter_turnout_model import train as vt_train, test as vt_test, FEATURES as vt_features
-from backend.ml_models.eu_trust_model import train as trust_train, test as trust_test, FEATURES as trust_features
+from flask import Blueprint, jsonify, current_app, request
+from backend.db_connection import get_db
+from backend.ml_models.voter_turnout_model import train as vt_train, test as vt_test, FEATURES as vt_features, predict_turnout
+from backend.ml_models.eu_trust_model import train as trust_train, test as trust_test, FEATURES as trust_features, predict_trust
 
 ml_bp = Blueprint("ml", __name__)
 
@@ -71,6 +72,20 @@ def get_eu_trust_features():
 
 @ml_bp.route("/ml/turnout-prediction", methods=["POST"])
 def turnout_prediction():
+    current_app.logger.info("POST /ml/turnout-prediction")
     data = request.get_json()
-    result = predict_turnout(data)
-    return jsonify(result)
+    try:
+        result = predict_turnout(data)
+        return jsonify(result), 200
+    except Exception as e:
+        current_app.logger.error(f"turnout prediction error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@ml_bp.route("/turnout-dataset", methods=["GET"])
+def get_turnout_dataset():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM eu_turnout_dataset ORDER BY country, year")
+    rows = cursor.fetchall()
+    cursor.close()
+    return jsonify(rows)
