@@ -39,37 +39,39 @@ st.header(f"Class: {class_name}")
 
 st.write("## Quizzes")
 if assessments:
-    cards_html = """
-    <div style="display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;">
-    """
-    for assessment in assessments:
+    st.markdown("""
+    <style>
+    section[data-testid="stMain"] div[data-testid="stButton"] > button {
+        background-color: #B3B5D0;
+        color: #1e1e2e;
+        border-radius: 12px;
+        border: 1px solid #444;
+        padding: 20px;
+        height: 100px;
+        text-align: left;
+        white-space: normal;
+    }
+    section[data-testid="stMain"] div[data-testid="stButton"] > button:hover {
+        background-color: #9799ba;
+        border: 1px solid #444;
+        color: #1e1e2e;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    cols = st.columns(min(len(assessments), 4))
+    for i, assessment in enumerate(assessments):
         name = assessment.get("assessmentName", f"Quiz {assessment['assessmentID']}")
         a_type = assessment.get("assessmentType", "")
-        cards_html += f"""
-        <div style="
-            min-width: 200px;
-            background-color: #B3B5D0;
-            border-radius: 12px;
-            padding: 20px;
-            flex-shrink: 0;
-            border: 1px solid #444;
-        ">
-            <div style="color: #1e1e2e; font-weight: bold; font-size: 16px; margin-bottom: 8px;">{name}</div>
-            <div style="color: #1e1e2e; font-size: 13px;">{a_type}</div>
-        </div>
-        """
-    cards_html += "</div>"
-    st.html(cards_html)
-    selected_name = st.selectbox(
-    "Select a quiz to start:",
-    options=[a.get("assessmentName") for a in assessments],
-    index=None,
-    placeholder="Choose a quiz..."
-    )
-    if st.button("Start Quiz", type="primary"):
-        selected = next(a for a in assessments if a.get("assessmentName") == selected_name)
-        st.session_state['selected_assessment'] = selected
-        st.switch_page("pages/03_Student_Assessment.py")
+        col = cols[i % 4]
+        with col:
+            if st.button(
+                f"**{name}**\n\n{a_type}",
+                key=f"assessment_{assessment['assessmentID']}",
+                use_container_width=True
+            ):
+                st.session_state['selected_assessment'] = assessment
+                st.switch_page("pages/03_Student_Assessment.py")
 else:
     st.write("No quizzes available.")
 

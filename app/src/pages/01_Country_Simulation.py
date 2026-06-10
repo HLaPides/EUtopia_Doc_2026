@@ -29,6 +29,166 @@ st.write('### Fill in the values to predict EU Election Turnout for your created
 tab1, tab2, tab3 = st.tabs(["Guided Simulation", "Custom Simulation", "Your Simulations"])
 
 #tab1 will be what Gerber said where each input is presented one at a time, more teaching than exploration
+with tab1:
+    steps = [
+        {
+            "key": "g_country_name",
+            "label": "Name your Country",
+            "description": "placeholder",
+            "type": "text"
+        },
+        {
+            "key": "g_population",
+            "label": "Population",
+            "description": "placeholder",
+            "type": "number",
+            "default": 5000000,
+            "step": 1000
+        },
+        {
+            "key": "g_median_age",
+            "label": "Median Age",
+            "description": "placeholder",
+            "type": "number",
+            "default": 40,
+            "min": 18
+        },
+        {
+            "key": "g_unemployment_rate",
+            "label": "Unemployment Rate (%)",
+            "description": "placeholder",
+            "type": "slider",
+            "default": 10,
+            "min": 0,
+            "max": 100
+        },
+        {
+            "key": "g_compulsory_voting",
+            "label": "Compulsory Voting",
+            "description": "placeholder",
+            "type": "radio",
+            "options": ["Yes", "No"]
+        },
+        {
+            "key": "g_region",
+            "label": "Region",
+            "description": "placeholder",
+            "type": "selectbox",
+            "options": ["Northern", "Southern", "Western", "Eastern"]
+        },
+        {
+            "key": "g_nat_election_turnout",
+            "label": "National Election Turnout (%)",
+            "description": "placeholder",
+            "type": "slider",
+            "default": 60,
+            "min": 0,
+            "max": 100
+        },
+    ]
+
+    if "guided_step" not in st.session_state:
+        st.session_state["guided_step"] = 0
+
+    step = st.session_state["guided_step"]
+    total_steps = len(steps)
+    current = steps[step]
+
+    st.progress((step) / total_steps, text=f"Step {step + 1} of {total_steps}")
+    st.write(f"### {current['label']}")
+    st.write(current["description"])
+
+    key = current["key"]
+    if current["type"] == "text":
+        st.text_input(
+            label=current["label"],
+            placeholder="Enter name...",
+            key=key,
+            label_visibility="collapsed"
+        )
+    elif current["type"] == "number":
+        st.number_input(
+            label=current["label"],
+            value=current.get("default", 0),
+            min_value=current.get("min", 0),
+            step=current.get("step", 1),
+            key=key,
+            label_visibility="collapsed"
+        )
+    elif current["type"] == "slider":
+        st.slider(
+            label=current["label"],
+            min_value=current.get("min", 0),
+            max_value=current.get("max", 100),
+            value=current.get("default", 50),
+            key=key,
+            label_visibility="collapsed"
+        )
+    elif current["type"] == "radio":
+        st.radio(
+            label=current["label"],
+            options=current["options"],
+            key=key,
+            label_visibility="collapsed"
+        )
+    elif current["type"] == "selectbox":
+        st.selectbox(
+            label=current["label"],
+            options=current["options"],
+            key=key,
+            label_visibility="collapsed"
+        )
+
+    col_back, col_spacer, col_next = st.columns([1, 4, 1])
+
+    with col_back:
+        if step > 0:
+            if st.button("← Back", use_container_width=True):
+                st.session_state["guided_step"] -= 1
+                st.rerun()
+
+    with col_next:
+        if step < total_steps - 1:
+            if st.button("Next →", type="primary", use_container_width=True):
+                st.session_state["guided_step"] += 1
+                st.rerun()
+        else:
+            if st.button("Predict →", type="primary", use_container_width=True):
+                region_val = st.session_state.get("g_region", "Eastern")
+                payload = {
+                    "compulsory_voting": 1 if st.session_state.get("g_compulsory_voting") == "Yes" else 0,
+                    "median_age": st.session_state.get("g_median_age", 40),
+                    "national_turnout": st.session_state.get("g_nat_election_turnout", 60),
+                    "unemployment_rate": st.session_state.get("g_unemployment_rate", 10),
+                    "population": st.session_state.get("g_population", 5000000),
+                    "region_northern": 1 if region_val == "Northern" else 0,
+                    "region_southern": 1 if region_val == "Southern" else 0,
+                    "region_western": 1 if region_val == "Western" else 0,
+                }
+
+                response = requests.post(f"{BASE_URL}/ml/turnout-prediction", json=payload)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    predicted = result.get("predictedTurnout")
+                    country = st.session_state.get("g_country_name", "Your Country")
+                    st.success(f"Predicted EU Election Turnout for **{country}**: **{predicted:.1f}%**")
+
+                    sim_payload = {
+                        "studentID": student_id,
+                        "countryName": country,
+                        "population": st.session_state.get("g_population"),
+                        "unemploymentRate": st.session_state.get("g_unemployment_rate"),
+                        "compulsoryVoting": st.session_state.get("g_compulsory_voting") == "Yes",
+                        "medianAge": st.session_state.get("g_median_age"),
+                        "region": region_val,
+                        "nationalTurnout": st.session_state.get("g_nat_election_turnout"),
+                        "predictedTurnout": predicted,
+                    }
+                    requests.post(f"{BASE_URL}/simulations", json=sim_payload)
+                    st.session_state["guided_step"] = 0
+                else:
+                    st.error("Something went wrong. Please try again.")
 
 #User can fill in all values in a single screen (selecting a country profile to use as base w.i.p)
 with tab2:
