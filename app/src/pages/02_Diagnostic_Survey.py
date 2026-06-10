@@ -40,7 +40,7 @@ euro_parliament_trust = st.radio(
         label_visibility="collapsed"
 )
 
-st.write('### How would you rate your trust in your national parliament?')
+nat_parliament_trust = st.write('### How would you rate your trust in your national parliament?')
 st.radio(
         label="",
         options= ["1 - Very Low", "2 - Low", "3 - Neutral", "4 - High", "5 - Very High"],
@@ -84,6 +84,7 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
         trust_parliament_converted = 1 if int(euro_parliament_trust[0]) <= 2 else 2
         trust_politicians_converted = 1 if int(politician_trust[0]) <= 2 else 2
         democracy_converted = 1 if int(democracy_satisfaction[0]) <= 2 else 2
+        trust_national_parliament_converted = 1 if int(nat_parliament_trust[0]) <= 2 else 2
 
         payload = {
             "studentID": st.session_state['userID'],
