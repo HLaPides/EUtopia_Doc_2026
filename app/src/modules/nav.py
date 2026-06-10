@@ -106,7 +106,6 @@ def SideBarLinks(show_home=False):
             lesson_approval_nav()
             voter_turnout_nav()
             eu_trust_nav()
-            lesson_approval_nav()
             
     # About link appears at the bottom for all roles
     about_page_nav()
