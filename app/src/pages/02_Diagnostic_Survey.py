@@ -24,14 +24,6 @@ level_of_edu = st.selectbox(
     placeholder="Select Education"
 )
 
-political_affiliation = st.selectbox(
-    label="Political Affiliation:",
-    options=["Liberal", "Conservative", "Socialist", "Green", "Nationalist"],
-    key="political_affiliation",
-    index=None,
-    placeholder="Select Affiliation"
-)
-
 st.write('### How would you rate your trust in the European Parliament?')
 euro_parliament_trust = st.radio(
         label="",
