@@ -283,6 +283,47 @@ def get_student_simulations(studentID):
 
 
 # ── ML ────────────────────────────────────────────────────────────────────────
+@api_bp.route("/turnout-dataset", methods=["GET"])
+def get_turnout_dataset():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM eu_turnout_dataset ORDER BY country, year")
+    rows = cursor.fetchall()
+    cursor.close()
+    return jsonify(rows)
+
+@api_bp.route("/simulations", methods=["POST"])
+def create_simulation():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Simulation
+        (studentID, countryName, population, unemploymentRate, compulsoryVoting,
+        medianAge, region, nationalTurnout, predictedTurnout, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("countryName"),
+            data.get("population"),
+            data.get("unemploymentRate"),
+            data.get("compulsoryVoting"),
+            data.get("medianAge"),
+            data.get("region"),
+            data.get("nationalTurnout"),
+            data.get("predictedTurnout"),
+            data.get("studentID"),
+            data.get("studentID"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "simulation saved"}), 201
+
 
 @api_bp.route("/ml/turnout-prediction", methods=["POST"])
 def turnout_prediction():
@@ -292,6 +333,59 @@ def turnout_prediction():
 
 
 # ── Classes ───────────────────────────────────────────────────────────────────
+
+@api_bp.route("/survey", methods=["POST"])
+def submit_survey():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO DiagnosticSurvey
+        (studentID, educationLevel, politicalAffiliation, trustEuroParliament,
+        trustPoliticians, satisfactionDemocracy)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("educationLevel"),
+            data.get("politicalAffiliation"),
+            data.get("trustEuroParliament"),
+            data.get("trustPoliticians"),
+            data.get("satisfactionDemocracy"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "survey submitted"}), 201
+
+
+@api_bp.route("/responses", methods=["POST"])
+def submit_response():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Response (studentID, questionID, input, score, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("questionID"),
+            data.get("input"),
+            data.get("score"),
+            data.get("studentID"),
+            data.get("studentID"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "response submitted"}), 201
 
 @api_bp.route("/classes", methods=["GET"])
 def get_classes():

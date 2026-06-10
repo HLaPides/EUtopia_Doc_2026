@@ -25,9 +25,11 @@ assessments = [a for a in all_assessments if a.get("lessonID") in lesson_ids]
 
 st.title(f"Welcome Student, {st.session_state['first_name']}.")
 
-completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
+completed = len([p for p in progress if p.get("completionStatus") == "completed"])
 total = len(progress)
 lesson_pct = int((completed / total) * 100) if total > 0 else 0
+difficulty_order = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
+sorted_lessons = sorted(lessons, key=lambda l: difficulty_order.get(l.get("difficultyLevel", ""), 99))
 
 col1, col2 = st.columns(2)
 col1.metric(label="Lesson Progress", value=f"{lesson_pct}%")
@@ -37,33 +39,45 @@ st.header(f"Class: {class_name}")
 
 st.write("## Quizzes")
 if assessments:
-    cards_html = """
-    <div style="display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;">
-    """
-    for assessment in assessments:
+    st.markdown("""
+    <style>
+    section[data-testid="stMain"] div[data-testid="stButton"] > button {
+        background-color: #B3B5D0;
+        color: #1e1e2e;
+        border-radius: 12px;
+        border: 1px solid #444;
+        padding: 20px;
+        height: 100px;
+        text-align: left;
+        white-space: normal;
+    }
+    section[data-testid="stMain"] div[data-testid="stButton"] > button:hover {
+        background-color: #9799ba;
+        border: 1px solid #444;
+        color: #1e1e2e;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    cols = st.columns(min(len(assessments), 4))
+    for i, assessment in enumerate(assessments):
         name = assessment.get("assessmentName", f"Quiz {assessment['assessmentID']}")
         a_type = assessment.get("assessmentType", "")
-        cards_html += f"""
-        <div style="
-            min-width: 200px;
-            background-color: #1e1e2e;
-            border-radius: 12px;
-            padding: 20px;
-            flex-shrink: 0;
-            border: 1px solid #444;
-        ">
-            <div style="color: #ffffff; font-weight: bold; font-size: 16px; margin-bottom: 8px;">{name}</div>
-            <div style="color: #ffffff; font-size: 13px;">{a_type}</div>
-        </div>
-        """
-    cards_html += "</div>"
-    st.html(cards_html)
+        col = cols[i % 4]
+        with col:
+            if st.button(
+                f"**{name}**\n\n{a_type}",
+                key=f"assessment_{assessment['assessmentID']}",
+                use_container_width=True
+            ):
+                st.session_state['selected_assessment'] = assessment
+                st.switch_page("pages/03_Student_Assessment.py")
 else:
     st.write("No quizzes available.")
 
 st.write("## Content")
 if lessons:
-    for lesson in lessons:
+    for lesson in sorted_lessons:
         st.subheader(lesson["title"])
         st.caption(f"Topic: {lesson.get('topicName', 'N/A')} | Difficulty: {lesson.get('difficultyLevel', 'N/A')}")
         st.write(lesson.get("content", "No content available."))
