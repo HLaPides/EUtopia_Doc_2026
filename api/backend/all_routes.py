@@ -191,22 +191,6 @@ def update_lesson_status(lessonID):
     cursor.close()
     return jsonify({"message": "lesson status updated"})
 
-@api_bp.route("/lessons/pending", methods=["GET"])
-def get_pending_lessons():
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT l.*, u.firstName, u.lastName, c.className
-        FROM Lessons l
-        JOIN Users u ON l.teacherID = u.userID
-        JOIN Class c ON l.classID = c.classID
-        WHERE l.approvalStatus = 'Pending'
-    """)
-    lessons = cursor.fetchall()
-    cursor.close()
-    return jsonify(lessons)
-
-
 @api_bp.route("/assessments", methods=["GET"])
 def get_assessments():
     db = get_db()
@@ -386,16 +370,17 @@ def get_student_profile(studentID):
     return jsonify(profile)
 
 
-@api_bp.route("/lessons/pending", methods=["GET"]) #get all pending lessons.
+@api_bp.route("/lessons/pending", methods=["GET"]) 
 def get_pending_lessons():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT L.lessonID, L.teacherID, CONCAT(U.firstName, ' ', U.lastName) AS teacherName,
-               L.title,L.content,L.difficultyLevel,L.approvalStatus
-        FROM Lessons L LEFT JOIN Users U ON L.teacherID = U.userID
-        WHERE L.approvalStatus = 'Pending'""")
+       SELECT L.lessonID, L.teacherID, L.topicName, L.classID,
+       CONCAT(U.firstName, ' ', U.lastName) AS teacherName,
+       L.title, L.content, L.difficultyLevel, L.approvalStatus, L.createdAt
+FROM Lessons L LEFT JOIN Users U ON L.teacherID = U.userID
+WHERE L.approvalStatus = 'Pending'""")
     lessons = cursor.fetchall()
     cursor.close()
 

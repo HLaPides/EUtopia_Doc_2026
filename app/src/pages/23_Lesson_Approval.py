@@ -1,69 +1,3 @@
-import streamlit as st
-import requests
-from modules.nav import SideBarLinks
-
-st.set_page_config(layout="wide")
-SideBarLinks()
-
-if not st.session_state.get("authenticated"):
-    st.switch_page("Home.py")
-
-BASE_URL = "http://web-api:4000"
-official_id = st.session_state["userID"]
-
-st.title("Lesson Approval")
-st.write("Review teacher-submitted lessons and approve or reject them.")
-
-lessons = requests.get(f"{BASE_URL}/lessons/pending").json()
-pending_lessons = lessons
-
-if not pending_lessons:
-    st.success("No pending lessons right now.")
-    st.stop()
-
-for lesson in pending_lessons:
-    with st.container(border=True):
-        st.subheader(lesson["title"])
-        st.write(f"**Topic:** {lesson.get('topicName', 'N/A')}")
-        st.write(f"**Difficulty:** {lesson.get('difficultyLevel', 'N/A')}")
-        teacher_name = lesson.get("teacherName") or "Unknown teacher"
-        st.write(f"**Teacher:** {teacher_name}")
-        st.write("**Lesson Content:**")
-        st.write(lesson.get("content", ""))
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("Approve", key=f"approve_{lesson['lessonID']}"):
-                requests.put(
-                    f"{BASE_URL}/lessons/{lesson['lessonID']}",
-                    json={
-                        "title": lesson["title"],
-                        "topicName": lesson.get("topicName"),
-                        "content": lesson["content"],
-                        "difficultyLevel": lesson.get("difficultyLevel"),
-                        "approvalStatus": "Approved",
-                        "updatedBy": official_id
-                    }
-                )
-                st.success("Lesson approved.")
-                st.rerun()
-
-        with col2:
-            if st.button("Reject", key=f"reject_{lesson['lessonID']}"):
-                requests.put(
-                    f"{BASE_URL}/lessons/{lesson['lessonID']}",
-                    json={
-                        "title": lesson["title"],
-                        "topicName": lesson.get("topicName"),
-                        "content": lesson["content"],
-                        "difficultyLevel": lesson.get("difficultyLevel"),
-                        "approvalStatus": "Rejected",
-                        "updatedBy": official_id
-                    }
-                )
-                st.error("Lesson rejected.")
-                st.rerun()
 import logging
 logger = logging.getLogger(__name__)
 
@@ -98,24 +32,19 @@ if not pending:
 # ── Filters ───────────────────────────────────────────────────────────────────
 col1, col2, col3 = st.columns(3)
 
-teachers = sorted(set(f"{l['firstName']} {l['lastName']}" for l in pending))
+teachers = sorted(set(l['teacherName'] for l in pending if l.get('teacherName')))
 topics   = sorted(set(l['topicName'] for l in pending if l.get('topicName')))
-classes  = sorted(set(l['className'] for l in pending if l.get('className')))
 
 with col1:
     selected_teacher = st.selectbox("Filter by Teacher", ["All"] + teachers)
 with col2:
     selected_topic = st.selectbox("Filter by Topic", ["All"] + topics)
-with col3:
-    selected_class = st.selectbox("Filter by Class", ["All"] + classes)
 
 filtered = pending
 if selected_teacher != "All":
-    filtered = [l for l in filtered if f"{l['firstName']} {l['lastName']}" == selected_teacher]
+    filtered = [l for l in filtered if l.get('teacherName') == selected_teacher]
 if selected_topic != "All":
     filtered = [l for l in filtered if l.get('topicName') == selected_topic]
-if selected_class != "All":
-    filtered = [l for l in filtered if l.get('className') == selected_class]
 
 st.divider()
 st.write(f"**{len(filtered)} lesson(s) pending review**")
@@ -125,14 +54,12 @@ for lesson in filtered:
     col1, col2, col3 = st.columns([4, 1, 1])
 
     with col1:
-        st.write(f"**{lesson.get('title')}**")
+        st.subheader(lesson.get('title'))
+        st.write(f"**Topic:** {lesson.get('topicName', 'N/A')}")
+        st.write(f"**Difficulty:** {lesson.get('difficultyLevel', 'N/A')}")
+        st.write(f"**Teacher:** {lesson.get('teacherName')} (ID: {lesson.get('teacherID')})")
         created = str(lesson.get('createdAt', ''))[:10]
-        st.caption(
-        f"{lesson.get('topicName')} | {lesson.get('difficultyLevel')} | "
-        f"{lesson.get('className')} | "
-        f"{lesson.get('firstName')} {lesson.get('lastName')} (ID: {lesson.get('teacherID')}) | "
-        f"Submitted {created}"
-    )
+        st.write(f"**Submitted:** {created}")
         with st.expander("View content"):
             st.write(lesson.get("content", ""))
 
@@ -140,8 +67,8 @@ for lesson in filtered:
         if st.button("Approve", key=f"approve_{lesson['lessonID']}", type="primary", use_container_width=True):
             try:
                 requests.put(
-                    f"{BASE_URL}/lessons/{lesson['lessonID']}/status",
-                    json={"approvalStatus": "Approved"}
+                    f"{BASE_URL}/lessons/{lesson['lessonID']}/approve",
+                    json={"officialID": st.session_state['userID']}
                 )
                 st.success("Approved")
                 st.rerun()
@@ -152,8 +79,8 @@ for lesson in filtered:
         if st.button("Reject", key=f"reject_{lesson['lessonID']}", type="secondary", use_container_width=True):
             try:
                 requests.put(
-                    f"{BASE_URL}/lessons/{lesson['lessonID']}/status",
-                    json={"approvalStatus": "Rejected"}
+                    f"{BASE_URL}/lessons/{lesson['lessonID']}/reject",
+                    json={"officialID": st.session_state['userID']}
                 )
                 st.warning("Rejected")
                 st.rerun()
