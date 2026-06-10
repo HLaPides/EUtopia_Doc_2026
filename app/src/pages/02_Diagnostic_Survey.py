@@ -35,7 +35,7 @@ euro_parliament_trust = st.radio(
 nat_parliament_trust = st.write('### How would you rate your trust in your national parliament?')
 st.radio(
         label="",
-        options= ["1 - Very Low", "2 - Low", "3 - Neutral", "4 - High", "5 - Very High"],
+        options= ["1 - Very Low", "2 - Low-Neutral", "3 - Neutral-High", "4 - Very High"],
         key="nat_parliament_trust",
         label_visibility="collapsed"
 )
@@ -81,10 +81,11 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
         payload = {
             "studentID": st.session_state['userID'],
             "educationLevel": level_of_edu,
-            "politicalAffiliation": political_affiliation,
-            "trustEuroParliament": int(euro_parliament_trust[0]),
-            "trustPoliticians": int(politician_trust[0]),
-            "democracySatisfaction": int(democracy_satisfaction[0]),
+            "leftRight": political_affiliation,
+            "trustEuroParliament": trust_parliament_converted,
+            "trustNationalParliament": trust_national_parliament_converted,
+            "trustPoliticians": trust_politicians_converted,
+            "democracySatisfaction": democracy_converted,
         }
 
         response = requests.post(f"{BASE_URL}/survey", json=payload)
