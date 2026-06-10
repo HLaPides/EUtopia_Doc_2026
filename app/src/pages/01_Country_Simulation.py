@@ -47,6 +47,7 @@ with tab2:
         population = st.number_input(
             label='Population:',
             value = 5000000,
+            step=1000,
             key="population",
             help="The total population of the country."
         )
@@ -56,6 +57,7 @@ with tab2:
     with col5:
         median_age = st.number_input(
             label='Median Age:',
+            min_value = 18,
             value = 46,
             key="median_age",
             help="Median age of the country's population"

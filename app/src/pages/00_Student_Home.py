@@ -28,6 +28,8 @@ st.title(f"Welcome Student, {st.session_state['first_name']}.")
 completed = len([p for p in progress if p.get("completionStatus") == "completed"])
 total = len(progress)
 lesson_pct = int((completed / total) * 100) if total > 0 else 0
+difficulty_order = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
+sorted_lessons = sorted(lessons, key=lambda l: difficulty_order.get(l.get("difficultyLevel", ""), 99))
 
 col1, col2 = st.columns(2)
 col1.metric(label="Lesson Progress", value=f"{lesson_pct}%")
@@ -58,12 +60,22 @@ if assessments:
         """
     cards_html += "</div>"
     st.html(cards_html)
+    selected_name = st.selectbox(
+    "Select a quiz to start:",
+    options=[a.get("assessmentName") for a in assessments],
+    index=None,
+    placeholder="Choose a quiz..."
+    )
+    if st.button("Start Quiz", type="primary"):
+        selected = next(a for a in assessments if a.get("assessmentName") == selected_name)
+        st.session_state['selected_assessment'] = selected
+        st.switch_page("pages/03_Student_Assessment.py")
 else:
     st.write("No quizzes available.")
 
 st.write("## Content")
 if lessons:
-    for lesson in lessons:
+    for lesson in sorted_lessons:
         st.subheader(lesson["title"])
         st.caption(f"Topic: {lesson.get('topicName', 'N/A')} | Difficulty: {lesson.get('difficultyLevel', 'N/A')}")
         st.write(lesson.get("content", "No content available."))
