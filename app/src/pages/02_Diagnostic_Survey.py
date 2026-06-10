@@ -35,8 +35,16 @@ political_affiliation = st.selectbox(
 st.write('### How would you rate your trust in the European Parliament?')
 euro_parliament_trust = st.radio(
         label="",
+        options= ["1 - Very Low", "2 - Low - Neutral", "3 - Neutral - High", "4 - Very High"],
+        key="pol_interest",
+        label_visibility="collapsed"
+)
+
+st.write('### How would you rate your trust in your national parliament?')
+st.radio(
+        label="",
         options= ["1 - Very Low", "2 - Low", "3 - Neutral", "4 - High", "5 - Very High"],
-        key="euro_parliament_trust",
+        key="nat_parliament_trust",
         label_visibility="collapsed"
 )
 
