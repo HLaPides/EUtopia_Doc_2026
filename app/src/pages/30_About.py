@@ -5,19 +5,32 @@ st.set_page_config(layout='wide')
 
 SideBarLinks()
 
-st.write("# About this App")
+st.markdown("""
+# 🌌 Welcome to EUtopia 🌌
 
-st.markdown(
-    """
-    This is a demo app for Data and Software in International Government and Politics Dialogue 2025 Project Course.  
+## Summer 2026 Belgium DoC Project 🇧🇪
 
-    The goal of this demo is to provide information on the tech stack 
-    being used as well as demo some of the features of the various platforms. 
+This is our team's repo for the Summer 2026 CS4973 final project, part of the Belgium Dialogue run by Dr. Gerber and Dr. Fontenot.
 
-    Stay tuned for more information and features to come!
-    """
-)
+### Team Members 👩‍🚀
+Sidra Ansari, Vineeth Kanpa, Bennett LaPides, & Meghan Paclob
 
-# Add a button to return to home page
+EUtopia is an interactive civic education platform that helps people understand the European Union through personalized learning, simulations, quizzes, and real-world data. Rather than presenting long, text-heavy lessons, our platform makes EU education engaging, relevant, and accessible.
+
+You can experience the platform from multiple perspectives:
+
+**Login as a Student** to complete personalized lessons, track your progress, take assessments, and experiment with election turnout simulations.
+
+**Login as a Teacher** to create educational content, manage learning experiences, and monitor student engagement and performance.
+
+**Login as an EU Official/Moderator** to review submitted content, oversee platform quality, and analyze platform-wide learning trends and participation metrics.
+
+Behind the scenes, EUtopia combines a relational database, REST APIs, interactive visualizations, and machine learning models that predict voter turnout using demographic and political indicators.
+
+Our mission is simple: make civic education engaging, data-driven, and meaningful so that future European citizens feel informed, confident, and ready to participate in democracy.
+
+*EUtopia: learn the EU by experiencing it.* 🇪🇺
+""")
+
 if st.button("Return to Home", type="primary"):
     st.switch_page("Home.py")
