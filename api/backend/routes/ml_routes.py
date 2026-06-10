@@ -67,3 +67,10 @@ def get_voter_turnout_features():
 def get_eu_trust_features():
     current_app.logger.info("GET /ml/eu-trust/features")
     return jsonify({"features": trust_features}), 200
+
+
+@ml_bp.route("/ml/turnout-prediction", methods=["POST"])
+def turnout_prediction():
+    data = request.get_json()
+    result = predict_turnout(data)
+    return jsonify(result)
