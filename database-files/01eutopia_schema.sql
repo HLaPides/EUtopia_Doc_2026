@@ -210,3 +210,37 @@ CREATE TABLE IF NOT EXISTS eu_trust_params (
     coef_vals TEXT NOT NULL,
     intercept FLOAT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS eu_turnout_dataset (
+    id                  INT AUTO_INCREMENT PRIMARY KEY,
+    country             VARCHAR(5)     NOT NULL,
+    year                INT            NOT NULL,
+    voter_turnout       DECIMAL(5,2),
+    population          BIGINT,
+    gdp_per_capita      DECIMAL(12,2),
+    unemployment_rate   DECIMAL(5,2),
+    compulsory_voting   TINYINT(1),
+    years_eu_membership INT,
+    urbanization_rate   DECIMAL(5,2),
+    median_age          DECIMAL(5,2),
+    eu_net_beneficiary  TINYINT(1),
+    weekend_voting      TINYINT(1),
+    national_turnout    DECIMAL(5,2),
+    region_northern     TINYINT(1),
+    region_southern     TINYINT(1),
+    region_western      TINYINT(1)
+);
+
+CREATE TABLE IF NOT EXISTS eurobarometer_dataset (
+    id                     INT AUTO_INCREMENT PRIMARY KEY,
+    country                VARCHAR(5),
+    age                    DECIMAL(5,1),
+    education              DECIMAL(5,1),
+    gender                 TINYINT(1),
+    political_interest     TINYINT(1),
+    trust_parliament       TINYINT(1),
+    trust_politicians      TINYINT(1),
+    satisfaction_democracy TINYINT(1),
+    left_right             DECIMAL(5,1),
+    trust_eu               TINYINT(1)
+);

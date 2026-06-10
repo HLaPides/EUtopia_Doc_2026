@@ -55,21 +55,20 @@ def analytics_nav():
     )
 
 
-# ---- Role: administrator ----------------------------------------------------
+# ---- Role: eu official ----------------------------------------------------
 
-def admin_home_nav():
-    st.sidebar.page_link("pages/20_Admin_Home.py", label="System Admin", icon="🖥️")
+def eu_official_home_nav():
+    st.sidebar.page_link("pages/20_EU_Official_Home.py", label="Home", icon="🏠")
 
+def voter_turnout_nav():
+    st.sidebar.page_link("pages/21_Voter_Turnout_Admin.py", label="Voter Turnout Model Admin", icon="📊")
 
-def ml_model_mgmt_nav():
-    st.sidebar.page_link(
-        "pages/21_ML_Model_Mgmt.py", label="ML Model Management", icon="🏢"
-    )
+def eu_trust_nav():
+    st.sidebar.page_link("pages/22_EU_Trust_Admin.py", label="EU Trust Model Admin", icon="🇪🇺")
 
-def new_ml_model_nav():
-    st.sidebar.page_link(
-        "pages/22_Prettier_ML.py", label="New ML Model", icon="📈"
-    )
+def lesson_approval_nav():
+    st.sidebar.page_link("pages/23_Lesson_Approval.py",label="Lesson Approval",icon="⚖️")
+
 
 # ---- Sidebar assembly -------------------------------------------------------
 
@@ -103,10 +102,11 @@ def SideBarLinks(show_home=False):
             lessons_nav()
             analytics_nav()
 
-        if st.session_state["role"] == "administrator":
-            admin_home_nav()
-            ml_model_mgmt_nav()
-            new_ml_model_nav()
+        if st.session_state["role"] == "eu_official":
+            eu_official_home_nav()
+            lesson_approval_nav()
+            voter_turnout_nav()
+            eu_trust_nav()
             
     # About link appears at the bottom for all roles
     about_page_nav()

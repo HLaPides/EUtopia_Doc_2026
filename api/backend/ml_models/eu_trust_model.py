@@ -17,9 +17,7 @@ Target:
                (don't know responses filtered out at training time)
 
 Final performance: Test Accuracy=0.732, Train Accuracy=0.729
-
 """
-import os
 import json
 import numpy as np
 import pandas as pd
@@ -42,15 +40,35 @@ TARGET = "trust_eu"
 # PRIVATE HELPERS
 # ============================================================
 
-def _get_csv_path() -> str:
+def _load_dataset() -> pd.DataFrame:
     """
-    Resolves the dataset path relative to this file's location.
-    Used by train() and test() only — predict() reads from the DB.
+    Loads the Eurobarometer training data from the DB.
+    Filters out don't know responses for trust_eu (coded as 3).
 
-    NOTE: eurobarometer_cleaned.csv must exist at this path. If the file
-    is moved or renamed, train() and test() will both fail.
+    Returns:
+        pd.DataFrame with columns matching FEATURES + TARGET
+
+    Raises:
+        ValueError: if no training data exists in the database.
     """
-    return os.path.join(os.path.dirname(__file__), "eurobarometer_cleaned.csv")
+    with get_db().cursor(dictionary=True) as cursor:
+        cursor.execute(
+            f'SELECT {", ".join(FEATURES)}, {TARGET} '
+            'FROM eurobarometer_dataset '
+            f'WHERE {TARGET} IN (0, 1)'
+        )
+        rows = cursor.fetchall()
+
+    if not rows:
+        raise ValueError("No training data found in eurobarometer_dataset.")
+
+    df = pd.DataFrame(rows).dropna()
+
+    for col in df.columns:
+        if col != 'country':
+            df[col] = df[col].astype(float)
+
+    return df
 
 
 def _get_params() -> tuple[np.ndarray, float]:
@@ -79,20 +97,17 @@ def _get_params() -> tuple[np.ndarray, float]:
     current_app.logger.info(f'eu_trust_model params loaded: coef={coef}')
     return coef, intercept
 
-# ROUTE: POST /trust/train  (EU official only)
-# Accepts an optional file upload path to retrain on new data.
-# Returns training metrics so the EU official can verify the model.
+
 def train(data_path: str = None) -> dict:
     """
-    Retrains the logistic regression model on the full dataset and writes
-    the new coefficients and intercept to the DB atomically.
+    Retrains the logistic regression model and writes the new
+    coefficients and intercept to the DB atomically.
     If the DB write fails, it is rolled back.
 
     Args:
-        data_path: path to the training CSV. Defaults to the standard
-                   dataset location. Pass a different path to retrain
-                   on updated data — the route should accept a file
-                   upload, save it to /tmp, and pass the path here.
+        data_path: optional path to a CSV file. If provided, reads from
+                   the file instead of the DB. Used when the EU official
+                   uploads a new dataset via the admin route.
 
     Returns:
         dict: {
@@ -104,13 +119,11 @@ def train(data_path: str = None) -> dict:
     Raises:
         Exception: if DB write fails, rolls back and re-raises.
     """
-    if data_path is None:
-        data_path = _get_csv_path()
-
-    df = pd.read_csv(data_path).dropna()
-
-    # filter out don't know responses for trust_eu (coded as 3)
-    df = df[df[TARGET].isin([0, 1])]
+    if data_path is not None:
+        df = pd.read_csv(data_path).dropna()
+        df = df[df[TARGET].isin([0, 1])]
+    else:
+        df = _load_dataset()
 
     X = df[FEATURES].values
     y = df[TARGET].values
@@ -122,11 +135,10 @@ def train(data_path: str = None) -> dict:
     model = LogisticRegression(max_iter=1000, random_state=42)
     model.fit(X_train, y_train)
 
-    train_acc = model.score(X_train, y_train)
-    test_acc  = model.score(X_test, y_test)
-
-    coef_list      = model.coef_[0].tolist()
-    intercept_val  = float(model.intercept_[0])
+    train_acc     = model.score(X_train, y_train)
+    test_acc      = model.score(X_test, y_test)
+    coef_list     = model.coef_[0].tolist()
+    intercept_val = float(model.intercept_[0])
 
     current_app.logger.info(
         f'eu_trust train() train_acc={train_acc:.4f} test_acc={test_acc:.4f}'
@@ -156,13 +168,10 @@ def train(data_path: str = None) -> dict:
         'n':              len(y),
     }
 
-
-# ROUTE: GET /trust/test  (EU official only)
-# No inputs needed. Returns accuracy metrics on a fresh train/test split.
 def test() -> dict:
     """
-    Evaluates the model on a fresh 80/20 train/test split and returns
-    accuracy metrics.
+    Evaluates the model on a fresh 80/20 train/test split using
+    training data from the DB and returns accuracy metrics.
 
     Returns:
         dict: {
@@ -171,8 +180,7 @@ def test() -> dict:
             'n':              int
         }
     """
-    df = pd.read_csv(_get_csv_path()).dropna()
-    df = df[df[TARGET].isin([0, 1])]
+    df = _load_dataset()
 
     X = df[FEATURES].values
     y = df[TARGET].values
@@ -190,11 +198,6 @@ def test() -> dict:
         'n':              len(y),
     }
 
-
-# ROUTE: POST /ml/trust-prediction
-# Called by the trust_prediction route.
-# Accepts a JSON dict of raw feature values, returns predicted trust
-# as both a binary label and a probability.
 def predict(
     education: float,
     trust_parliament: int,

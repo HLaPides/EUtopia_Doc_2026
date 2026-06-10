@@ -38,13 +38,10 @@ BASE_URL = "http://web-api:4000"
 users = requests.get(f"{BASE_URL}/users").json()
 user_map = {u["userID"]: u for u in users}
 
-student_ids  = [1, 4, 6, 9, 10, 13, 14, 23, 30, 34, 36, 39, 42, 45, 49, 50]
-teacher_ids  = [2, 12, 18, 19, 27, 40, 43, 46, 48]
-official_ids = [3]
+students = requests.get(f"{BASE_URL}/users/by-role/student").json()
+teachers = requests.get(f"{BASE_URL}/users/by-role/teacher").json()
+officials = requests.get(f"{BASE_URL}/users/by-role/eu_official").json()
 
-students  = [user_map[i] for i in student_ids  if i in user_map]
-teachers  = [user_map[i] for i in teacher_ids  if i in user_map]
-officials = [user_map[i] for i in official_ids if i in user_map]
 
 def user_label(user):
     return f"{user['firstName']} {user['lastName']}"
@@ -119,6 +116,6 @@ with col2:
             st.session_state['role'] = 'eu_official'
             st.session_state['first_name'] = selected_official['firstName']
             st.session_state['userID'] = selected_official['userID']
-            st.switch_page('pages/20_Admin_Home.py')
+            st.switch_page('pages/20_EU_Official_Home.py')
         else:
             st.warning("Please select an EU official first.")
