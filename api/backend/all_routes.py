@@ -334,34 +334,6 @@ def turnout_prediction():
 
 # ── Classes ───────────────────────────────────────────────────────────────────
 
-@api_bp.route("/survey", methods=["POST"])
-def submit_survey():
-    data = request.get_json()
-    db = get_db()
-    cursor = db.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO DiagnosticSurvey
-        (studentID, educationLevel, politicalAffiliation, trustEuroParliament,
-        trustPoliticians, satisfactionDemocracy)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        """,
-        (
-            data.get("studentID"),
-            data.get("educationLevel"),
-            data.get("politicalAffiliation"),
-            data.get("trustEuroParliament"),
-            data.get("trustPoliticians"),
-            data.get("satisfactionDemocracy"),
-        )
-    )
-
-    db.commit()
-    cursor.close()
-    return jsonify({"message": "survey submitted"}), 201
-
-
 @api_bp.route("/responses", methods=["POST"])
 def submit_response():
     data = request.get_json()
