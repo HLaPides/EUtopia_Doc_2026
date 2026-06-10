@@ -51,7 +51,7 @@ st.radio(
 st.write('### How would you rate your trust in politicians?')
 politician_trust = st.radio(
         label="",
-        options= ["1 - Very Low", "2 - Low", "3 - Neutral", "4 - High", "5 - Very High"],
+        options= ["1 - Very Low", "2 - Low-Neutral", "3 - Neutral-High", "4 - Very High"],
         key="politician_trust",
         label_visibility="collapsed"
 )
@@ -59,15 +59,32 @@ politician_trust = st.radio(
 st.write('#### How satisfied are you with democracy?')
 democracy_satisfaction = st.radio(
     label="",
-    options= ["1 - Very Low", "2 - Low", "3 - Neutral", "4 - High", "5 - Very High"],
+    options= ["1 - Very Low", "2 - Low-Neutral", "3 - Neutral-High", "4 - Very High"],
     key="democracy_satisfaction",
     label_visibility="collapsed"
 )
+
+st.write('### Where do you place yourself on the political spectrum?')
+political_affiliation = st.slider(
+    label="Political Orientation:",
+    min_value=1,
+    max_value=10,
+    value=5,
+    step=1,
+    format="%d",
+    key="political_affiliation",
+    help="1 = Far Left, 10 = Far Right"
+)
+st.caption("1 = Far Left | 5 = Centre | 10 = Far Right")
 
 if st.button("Submit Survey", type="primary", use_container_width=True):
     if not level_of_edu or not political_affiliation:
         st.warning("Please fill in all fields before submitting.")
     else:
+        trust_parliament_converted = 1 if int(euro_parliament_trust[0]) <= 2 else 2
+        trust_politicians_converted = 1 if int(politician_trust[0]) <= 2 else 2
+        democracy_converted = 1 if int(democracy_satisfaction[0]) <= 2 else 2
+
         payload = {
             "studentID": st.session_state['userID'],
             "educationLevel": level_of_edu,
