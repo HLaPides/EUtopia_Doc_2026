@@ -258,6 +258,59 @@ def turnout_prediction():
 
     return jsonify(result)
 
+@api_bp.route("/survey", methods=["POST"])
+def submit_survey():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO DiagnosticSurvey
+        (studentID, educationLevel, politicalAffiliation, trustEuroParliament,
+        trustPoliticians, satisfactionDemocracy)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("educationLevel"),
+            data.get("politicalAffiliation"),
+            data.get("trustEuroParliament"),
+            data.get("trustPoliticians"),
+            data.get("satisfactionDemocracy"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "survey submitted"}), 201
+
+
+@api_bp.route("/responses", methods=["POST"])
+def submit_response():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Response (studentID, questionID, input, score, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("studentID"),
+            data.get("questionID"),
+            data.get("input"),
+            data.get("score"),
+            data.get("studentID"),
+            data.get("studentID"),
+        )
+    )
+
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "response submitted"}), 201
+
 @api_bp.route("/classes", methods=["GET"])
 def get_classes():
     db = get_db()
