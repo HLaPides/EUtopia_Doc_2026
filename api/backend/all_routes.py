@@ -218,6 +218,15 @@ def get_student_simulations(studentID):
     cursor.close()
     return jsonify(simulations)
 
+@api_bp.route("/turnout-dataset", methods=["GET"])
+def get_turnout_dataset():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM eu_turnout_dataset ORDER BY country, year")
+    rows = cursor.fetchall()
+    cursor.close()
+    return jsonify(rows)
+
 @api_bp.route("/simulations", methods=["POST"])
 def create_simulation():
     data = request.get_json()
