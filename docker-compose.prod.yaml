@@ -39,7 +39,8 @@ services:
     expose:
       - "4000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     build: ./database-files
@@ -47,6 +48,12 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     # tmpfs (RAM-backed) explicitly overrides the mysql:9 image's VOLUME
     # directive for /var/lib/mysql. Without this, Docker silently creates an
     # anonymous volume that survives container recreates, and MySQL's

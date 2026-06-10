@@ -67,8 +67,7 @@ def eu_trust_nav():
     st.sidebar.page_link("pages/22_EU_Trust_Admin.py", label="EU Trust Model Admin", icon="🇪🇺")
 
 def lesson_approval_nav():
-    st.sidebar.page_link("pages/23_Lesson_Approval.py",label="Lesson Approval",icon="⚖️")
-
+    st.sidebar.page_link("pages/23_Lesson_Approval.py", label="Lesson Approval", icon="✅")
 
 # ---- Sidebar assembly -------------------------------------------------------
 
