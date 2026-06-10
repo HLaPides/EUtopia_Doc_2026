@@ -161,6 +161,19 @@ def delete_lesson(lessonID):
 
     return jsonify({"message": "lesson deleted"})
 
+@api_bp.route("/lessons/<int:lessonID>/status", methods=["PUT"])
+def update_lesson_status(lessonID):
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        "UPDATE Lessons SET approvalStatus = %s WHERE lessonID = %s",
+        (data["approvalStatus"], lessonID)
+    )
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "lesson status updated"})
+
 
 @api_bp.route("/assessments", methods=["GET"])
 def get_assessments():
