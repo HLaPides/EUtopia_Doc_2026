@@ -1,4 +1,4 @@
-#🌌Welcome to EUtopia🌌!
+# 🌌Welcome to EUtopia🌌!
 
 ## Summer 2026 Belgium DoC Project 🇧🇪
 
