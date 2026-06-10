@@ -29,15 +29,44 @@ if not pending:
     st.info("No lessons pending approval.")
     st.stop()
 
-st.write(f"**{len(pending)} lesson(s) pending review**")
+# ── Filters ───────────────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns(3)
+
+teachers = sorted(set(f"{l['firstName']} {l['lastName']}" for l in pending))
+topics   = sorted(set(l['topicName'] for l in pending if l.get('topicName')))
+classes  = sorted(set(l['className'] for l in pending if l.get('className')))
+
+with col1:
+    selected_teacher = st.selectbox("Filter by Teacher", ["All"] + teachers)
+with col2:
+    selected_topic = st.selectbox("Filter by Topic", ["All"] + topics)
+with col3:
+    selected_class = st.selectbox("Filter by Class", ["All"] + classes)
+
+filtered = pending
+if selected_teacher != "All":
+    filtered = [l for l in filtered if f"{l['firstName']} {l['lastName']}" == selected_teacher]
+if selected_topic != "All":
+    filtered = [l for l in filtered if l.get('topicName') == selected_topic]
+if selected_class != "All":
+    filtered = [l for l in filtered if l.get('className') == selected_class]
+
+st.divider()
+st.write(f"**{len(filtered)} lesson(s) pending review**")
 st.divider()
 
-for lesson in pending:
+for lesson in filtered:
     col1, col2, col3 = st.columns([4, 1, 1])
 
     with col1:
         st.write(f"**{lesson.get('title')}**")
-        st.caption(f"{lesson.get('topicName')} · {lesson.get('difficultyLevel')} · {lesson.get('firstName')} {lesson.get('lastName')} (ID: {lesson.get('teacherID')})")
+        created = str(lesson.get('createdAt', ''))[:10]
+        st.caption(
+        f"{lesson.get('topicName')} | {lesson.get('difficultyLevel')} | "
+        f"{lesson.get('className')} | "
+        f"{lesson.get('firstName')} {lesson.get('lastName')} (ID: {lesson.get('teacherID')}) | "
+        f"Submitted {created}"
+    )
         with st.expander("View content"):
             st.write(lesson.get("content", ""))
 

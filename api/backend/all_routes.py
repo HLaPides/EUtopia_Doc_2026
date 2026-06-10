@@ -179,9 +179,10 @@ def get_pending_lessons():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
-        SELECT l.*, u.firstName, u.lastName
+        SELECT l.*, u.firstName, u.lastName, c.className
         FROM Lessons l
         JOIN Users u ON l.teacherID = u.userID
+        JOIN Class c ON l.classID = c.classID
         WHERE l.approvalStatus = 'Pending'
     """)
     lessons = cursor.fetchall()
