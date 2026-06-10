@@ -39,8 +39,8 @@ users = requests.get(f"{BASE_URL}/users").json()
 user_map = {u["userID"]: u for u in users}
 
 student_ids  = [1, 4, 6, 9, 10, 13, 14, 23, 30, 34, 36, 39, 42, 45, 49, 50]
-teacher_ids  = [2, 12, 18, 19, 27, 40, 43, 46, 48]
-official_ids = [3]
+teacher_ids  = [2, 5, 12, 15, 18, 19, 21, 22, 26, 27, 33, 37, 40, 43, 46, 48]
+official_ids = [3, 7, 8, 11, 16, 17, 20, 24, 25, 28, 29, 31, 32, 35, 38, 41, 44, 47]
 
 students  = [user_map[i] for i in student_ids  if i in user_map]
 teachers  = [user_map[i] for i in teacher_ids  if i in user_map]
