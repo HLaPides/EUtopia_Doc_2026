@@ -25,15 +25,18 @@ assessments = [a for a in all_assessments if a.get("lessonID") in lesson_ids]
 
 st.title(f"Welcome Student, {st.session_state['first_name']}.")
 
-completed = len([p for p in progress if p.get("completionStatus") == "completed"])
+completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
 total = len(progress)
 lesson_pct = int((completed / total) * 100) if total > 0 else 0
 difficulty_order = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
 sorted_lessons = sorted(lessons, key=lambda l: difficulty_order.get(l.get("difficultyLevel", ""), 99))
+quiz_scores = [p.get("quizPerformance") for p in progress if p.get("quizPerformance") is not None]
+avg_grade = round(sum(float(s) for s in quiz_scores) / len(quiz_scores), 1) if quiz_scores else None
+
 
 col1, col2 = st.columns(2)
 col1.metric(label="Lesson Progress", value=f"{lesson_pct}%")
-col2.metric(label="Class Grade", value="80%")
+col2.metric(label="Class Grade", value=f"{avg_grade}%" if avg_grade is not None else "N/A")
 
 st.header(f"Class: {class_name}")
 
