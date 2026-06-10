@@ -67,7 +67,7 @@ political_affiliation = st.slider(
     key="political_affiliation",
     help="1 = Far Left, 10 = Far Right"
 )
-st.caption("1 = Far Left | 5 = Centre | 10 = Far Right")
+st.caption("1 = Far Left | 10 = Far Right")
 
 if st.button("Submit Survey", type="primary", use_container_width=True):
     if not level_of_edu or not political_affiliation:
