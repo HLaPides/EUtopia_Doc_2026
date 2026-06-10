@@ -77,17 +77,17 @@ with tab3:
     if student_progress:
         df = pd.DataFrame({
             "Student": [s["name"] for s in student_progress],
-            "Avg Engagement Time (min)": [s["engagement"] for s in student_progress]
+            "Engagement Time (min)": [s["engagement"] for s in student_progress]
         })
-        df = df.sort_values("Avg Engagement Time (min)", ascending=True)
+        df = df.sort_values("Engagement Time (min)", ascending=True)
 
         fig = px.bar(
             df,
-            x="Avg Engagement Time (min)",
+            x="Engagement Time (min)",
             y="Student",
             orientation="h",
             title="Student Engagement",
-            text="Avg Engagement Time (min)",
+            text="Engagement Time (min)",
         )
         fig.update_traces(
             marker_color="#2c7bb6",
@@ -96,7 +96,7 @@ with tab3:
         )
         fig.update_layout(
             height=max(300, len(df) * 40),
-            xaxis=dict(range=[0, df["Avg Engagement Time (min)"].max() * 1.2]),
+            xaxis=dict(range=[0, df["Engagement Time (min)"].max() * 1.2]),
             plot_bgcolor="white",
             showlegend=False,
         )

@@ -43,3 +43,4 @@ try:
         st.write(f"• {f}")
 except Exception as e:
     st.error(f"Could not load features: {e}")
+st.divider()    

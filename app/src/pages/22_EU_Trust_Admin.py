@@ -21,7 +21,7 @@ st.divider()
 
 # ── Test ─────────────────────────────────────────────────────────────────────
 st.subheader("Evaluate Model")
-st.write("Evaluates the model on a fresh 80/20 train/test split.")
+st.write("Evaluates the model on an 80/20 train/test split.")
 
 if st.button("Run Test", type="secondary", use_container_width=True):
     with st.spinner("Evaluating..."):
