@@ -4,10 +4,12 @@ import os
 import logging
 
 from backend.db_connection import init_app as init_db
-from backend.simple.simple_routes import simple_routes
-from backend.ngos.ngo_routes import ngo_bp
-from backend.all_routes import api_bp
-from backend.ml_routes import ml_bp
+from backend.routes.initialization_routes import apiinit_bp
+from backend.routes.ml_routes import ml_bp
+from backend.routes.lessons_routes import lsns_bp
+from backend.routes.assessments_routes import asmts_bp
+from backend.routes.surveys_routes import svys_bp
+from backend.routes.classes_routes import class_bp
 
 
 
@@ -40,10 +42,13 @@ def create_app():
     # and give a url prefix to each.
     # simple_routes has no prefix intentionally — it serves root-level demo routes (/, /playlist, etc.)
     app.logger.info("create_app(): registering blueprints")
-    app.register_blueprint(simple_routes)
-    app.register_blueprint(ngo_bp, url_prefix="/ngo")
-    app.register_blueprint(api_bp) #registering blueprint
+    app.register_blueprint(apiinit_bp) #registering blueprint
     app.register_blueprint(ml_bp)
+    app.register_blueprint(lsns_bp)
+    app.register_blueprint(asmts_bp)
+    app.register_blueprint(svys_bp)
+    app.register_blueprint(class_bp)
+
     print(app.url_map)
 
 
