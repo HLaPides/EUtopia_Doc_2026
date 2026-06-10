@@ -59,6 +59,23 @@ def get_user_roles(userID):
     cursor.close()
     return jsonify(roles)
 
+#organizing users by roles
+@api_bp.route("/users/by-role/<roleName>", methods=["GET"])
+def get_users_by_role(roleName):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT U.userID,U.firstName,U.lastName,U.email
+        FROM Users U
+            JOIN UserRole UR ON U.userID = UR.userID
+            JOIN Roles R ON UR.roleID = R.roleID
+        WHERE R.roleName = %s""", (roleName,))
+
+    users = cursor.fetchall()
+    cursor.close()
+
+    return jsonify(users)
+
 
 @api_bp.route("/lessons", methods=["GET"]) # retrieve all lessons in database.
 def get_lessons():
