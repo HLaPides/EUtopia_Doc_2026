@@ -174,6 +174,20 @@ def update_lesson_status(lessonID):
     cursor.close()
     return jsonify({"message": "lesson status updated"})
 
+@api_bp.route("/lessons/pending", methods=["GET"])
+def get_pending_lessons():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT l.*, u.firstName, u.lastName
+        FROM Lessons l
+        JOIN Users u ON l.teacherID = u.userID
+        WHERE l.approvalStatus = 'Pending'
+    """)
+    lessons = cursor.fetchall()
+    cursor.close()
+    return jsonify(lessons)
+
 
 @api_bp.route("/assessments", methods=["GET"])
 def get_assessments():

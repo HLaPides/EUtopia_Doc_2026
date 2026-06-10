@@ -20,8 +20,7 @@ st.write("Review and approve or reject lessons submitted by teachers.")
 st.divider()
 
 try:
-    all_lessons = requests.get(f"{BASE_URL}/lessons").json()
-    pending = [l for l in all_lessons if l.get("approvalStatus") == "Pending"]
+    pending = requests.get(f"{BASE_URL}/lessons/pending").json()
 except Exception as e:
     st.error(f"Could not load lessons: {e}")
     st.stop()
@@ -38,7 +37,7 @@ for lesson in pending:
 
     with col1:
         st.write(f"**{lesson.get('title')}**")
-        st.caption(f"{lesson.get('topicName')} · {lesson.get('difficultyLevel')} · Teacher ID {lesson.get('teacherID')}")
+        st.caption(f"{lesson.get('topicName')} · {lesson.get('difficultyLevel')} · {lesson.get('firstName')} {lesson.get('lastName')} (ID: {lesson.get('teacherID')})")
         with st.expander("View content"):
             st.write(lesson.get("content", ""))
 
