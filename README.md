@@ -30,3 +30,7 @@ EUtopia: learn the EU by experiencing it. 🇪🇺
 4. Open your browser and navigate to `http://localhost:8501`
 
 Everything runs automatically on startup.
+
+### Blog
+Here is a link to our blog documenting the process of creating our platform:
+https://vineethkanpa07.github.io/CS4973_Project_Group7/
