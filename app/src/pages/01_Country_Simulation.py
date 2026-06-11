@@ -13,7 +13,6 @@ SideBarLinks()
 
 BASE_URL = "http://web-api:4000"
 student_id = st.session_state['userID']
-simulations = requests.get(f"{BASE_URL}/simulations/{student_id}").json()
 
 st.header('Build Your Own Country')
 st.write('### Fill in the values to predict EU Election Turnout for your created country')
@@ -32,7 +31,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["Guided Simulation", "Custom Simulation", "Your Simulations"])
-
 
 COUNTRY_NAMES = {
     'AT': 'Austria', 'BE': 'Belgium', 'BG': 'Bulgaria',
@@ -74,7 +72,7 @@ def show_comparison(comparison: dict, country_name: str = "Your Country"):
     )
 
 
-def show_turnout_heatmap():
+def show_turnout_heatmap(key: str = "heatmap"):
     turnout_2024 = {
         'Belgium': 89.0, 'Luxembourg': 84.1, 'Malta': 72.8,
         'Italy': 49.7, 'Denmark': 58.7, 'Germany': 64.8,
@@ -127,19 +125,21 @@ def show_turnout_heatmap():
             lataxis=dict(range=[34, 72]),
         )
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 
 def make_steps(prefix):
     return [
         {
             "key": f"{prefix}_country_name",
+            "save_key": f"{prefix}_sv_country_name",
             "label": "Name your Country",
             "description": "Every country needs a name! This is your chance to get creative. The name won't affect the prediction, it's just how your simulation will be saved and identified.",
             "type": "text"
         },
         {
             "key": f"{prefix}_population",
+            "save_key": f"{prefix}_sv_population",
             "label": "Population",
             "description": "Population size shapes how electoral systems are designed and how voter turnout is measured. Larger countries often have more diverse populations and complex political landscapes, which can affect how engaged citizens feel. In the EU, populations range from about 500,000 in Malta to over 80 million in Germany.",
             "type": "number",
@@ -149,6 +149,7 @@ def make_steps(prefix):
         },
         {
             "key": f"{prefix}_median_age",
+            "save_key": f"{prefix}_sv_median_age",
             "label": "Median Age",
             "description": "The median age of a population is one of the strongest predictors of voter turnout. Older populations tend to vote at significantly higher rates than younger ones, older citizens often feel more invested in political outcomes and have more stable voting habits. The EU average median age is around 44 years.",
             "type": "number",
@@ -158,6 +159,7 @@ def make_steps(prefix):
         },
         {
             "key": f"{prefix}_unemployment_rate",
+            "save_key": f"{prefix}_sv_unemployment_rate",
             "label": "Unemployment Rate (%)",
             "description": "Economic conditions have a complex relationship with political participation. High unemployment can discourage civic engagement when people feel the system isn't working for them, but it can also mobilize voters who want change. The EU average unemployment rate has historically ranged between 5% and 12%.",
             "type": "slider",
@@ -167,6 +169,7 @@ def make_steps(prefix):
         },
         {
             "key": f"{prefix}_compulsory_voting",
+            "save_key": f"{prefix}_sv_compulsory_voting",
             "label": "Compulsory Voting",
             "description": "In some countries, voting is legally required for eligible citizens. Belgium and Luxembourg are the only EU countries that meaningfully enforce compulsory voting laws, and both consistently have some of the highest turnout rates in Europe, often above 85%. Making voting optional tends to lower participation significantly.",
             "type": "radio",
@@ -174,6 +177,7 @@ def make_steps(prefix):
         },
         {
             "key": f"{prefix}_region",
+            "save_key": f"{prefix}_sv_region",
             "label": "Region",
             "description": "Where a country is located in Europe has a strong effect on EU election turnout, even after accounting for other factors. Western European countries average around 20 percentage points higher turnout than Eastern European ones. This reflects differences in how long countries have been EU members, historical relationships with democratic institutions, and levels of trust in the European project.",
             "type": "selectbox",
@@ -181,6 +185,7 @@ def make_steps(prefix):
         },
         {
             "key": f"{prefix}_nat_election_turnout",
+            "save_key": f"{prefix}_sv_nat_election_turnout",
             "label": "National Election Turnout (%)",
             "description": "Countries where citizens regularly participate in national elections also tend to vote more in EU elections. If people are in the habit of voting domestically, they are more likely to show up for European elections too. National turnout in EU countries ranges widely, from around 35% in some Eastern European countries to over 90% in Belgium.",
             "type": "slider",
@@ -201,9 +206,13 @@ def run_step_simulation(prefix, step_key):
     total_steps = len(steps)
     current = steps[step]
     key = current["key"]
+    save_key = current["save_key"]
 
-    if key not in st.session_state and "default" in current:
-        st.session_state[key] = current["default"]
+    if key not in st.session_state:
+        if save_key in st.session_state:
+            st.session_state[key] = st.session_state[save_key]
+        elif "default" in current:
+            st.session_state[key] = current["default"]
 
     st.progress((step + 1) / total_steps, text=f"Step {step + 1} of {total_steps}")
     st.write(f"### {current['label']}")
@@ -216,7 +225,6 @@ def run_step_simulation(prefix, step_key):
             key=key,
             label_visibility="collapsed"
         )
-
     elif current["type"] == "number":
         st.number_input(
             label=current["label"],
@@ -226,7 +234,6 @@ def run_step_simulation(prefix, step_key):
             key=key,
             label_visibility="collapsed"
         )
-
     elif current["type"] == "slider":
         st.slider(
             label=current["label"],
@@ -236,25 +243,23 @@ def run_step_simulation(prefix, step_key):
             key=key,
             label_visibility="collapsed"
         )
-
     elif current["type"] == "radio":
         options = current["options"]
-        current_value = st.session_state.get(key, options[0])
+        saved = st.session_state.get(save_key, options[0])
         st.radio(
             label=current["label"],
             options=options,
-            index=options.index(current_value),
+            index=options.index(saved) if saved in options else 0,
             key=key,
             label_visibility="collapsed"
         )
-
     elif current["type"] == "selectbox":
         options = current["options"]
-        current_value = st.session_state.get(key, options[0])
+        saved = st.session_state.get(save_key, options[0])
         st.selectbox(
             label=current["label"],
             options=options,
-            index=options.index(current_value),
+            index=options.index(saved) if saved in options else 0,
             key=key,
             label_visibility="collapsed"
         )
@@ -264,6 +269,7 @@ def run_step_simulation(prefix, step_key):
     with col_back:
         if step > 0:
             if st.button("← Back", use_container_width=True, key=f"{prefix}_back"):
+                st.session_state[save_key] = st.session_state.get(key)
                 st.session_state[step_key] -= 1
                 st.rerun()
 
@@ -291,64 +297,61 @@ def run_step_simulation(prefix, step_key):
                         valid = False
 
                 if valid:
+                    st.session_state[save_key] = st.session_state.get(key)
                     st.session_state.pop(f"{prefix}_error", None)
                     st.session_state[step_key] += 1
                     st.rerun()
                 else:
                     st.session_state[f"{prefix}_error"] = error_msg
                     st.rerun()
+
             if st.session_state.get(f"{prefix}_error"):
                 st.error(st.session_state[f"{prefix}_error"])
+
         else:
             if st.button("Predict EU Election Turnout", type="primary", use_container_width=True, key=f"{prefix}_predict"):
-                region_val = st.session_state.get(f"{prefix}_region", "Eastern")
+                st.session_state[save_key] = st.session_state.get(key)
+
+                country_name = st.session_state.get(f"{prefix}_sv_country_name", "").strip() or "Your Country"
+                region_val   = st.session_state.get(f"{prefix}_sv_region", "Eastern")
 
                 payload = {
-                    "compulsory_voting": 1 if st.session_state.get(f"{prefix}_compulsory_voting") == "Yes" else 0,
-                    "median_age": st.session_state.get(f"{prefix}_median_age"),
-                    "national_turnout": st.session_state.get(f"{prefix}_nat_election_turnout"),
-                    "unemployment_rate": st.session_state.get(f"{prefix}_unemployment_rate"),
-                    "population": st.session_state.get(f"{prefix}_population"),
-                    "region_northern": 1 if region_val == "Northern" else 0,
-                    "region_southern": 1 if region_val == "Southern" else 0,
-                    "region_western": 1 if region_val == "Western" else 0,
+                    "compulsory_voting": 1 if st.session_state.get(f"{prefix}_sv_compulsory_voting") == "Yes" else 0,
+                    "median_age":        st.session_state.get(f"{prefix}_sv_median_age", 40),
+                    "national_turnout":  st.session_state.get(f"{prefix}_sv_nat_election_turnout", 60),
+                    "unemployment_rate": st.session_state.get(f"{prefix}_sv_unemployment_rate", 10),
+                    "population":        st.session_state.get(f"{prefix}_sv_population", 5000000),
+                    "region_northern":   1 if region_val == "Northern" else 0,
+                    "region_southern":   1 if region_val == "Southern" else 0,
+                    "region_western":    1 if region_val == "Western"  else 0,
                 }
 
                 response = requests.post(f"{BASE_URL}/ml/turnout-prediction", json=payload)
 
                 if response.status_code == 200:
                     result = response.json()
-                    predicted = result.get("predicted_turnout")
-                    similar = result.get("similar_country")
-                    similar_turnout = result.get("similar_country_turnout")
-                    country = st.session_state.get(f"{prefix}_saved_country_name", "").strip() or st.session_state.get(f"{prefix}_country_name", "").strip() or "Your Country"
-
                     st.session_state[f"{prefix}_prediction"] = {
-                        "predicted": predicted,
-                        "similar": similar,
-                        "similar_turnout": similar_turnout,
-                        "country": country,
-                        "comparison": result.get("comparison"),
+                        "predicted":       result.get("predicted_turnout"),
+                        "similar":         result.get("similar_country"),
+                        "similar_turnout": result.get("similar_country_turnout"),
+                        "country":         country_name,
+                        "comparison":      result.get("comparison"),
                     }
 
                     sim_payload = {
-                        "studentID": student_id,
-                        "countryName": country,
-                        "population": st.session_state.get(f"{prefix}_population"),
-                        "unemploymentRate": st.session_state.get(f"{prefix}_unemployment_rate"),
-                        "compulsoryVoting": st.session_state.get(f"{prefix}_compulsory_voting") == "Yes",
-                        "medianAge": st.session_state.get(f"{prefix}_median_age"),
-                        "region": region_val,
-                        "nationalTurnout": st.session_state.get(f"{prefix}_nat_election_turnout"),
-                        "predicted_turnout": predicted,
+                        "studentID":       student_id,
+                        "countryName":     country_name,
+                        "population":      st.session_state.get(f"{prefix}_sv_population"),
+                        "unemploymentRate": st.session_state.get(f"{prefix}_sv_unemployment_rate"),
+                        "compulsoryVoting": st.session_state.get(f"{prefix}_sv_compulsory_voting") == "Yes",
+                        "medianAge":       st.session_state.get(f"{prefix}_sv_median_age"),
+                        "region":          region_val,
+                        "nationalTurnout": st.session_state.get(f"{prefix}_sv_nat_election_turnout"),
+                        "predicted_turnout": result.get("predicted_turnout"),
                     }
-
                     save_response = requests.post(f"{BASE_URL}/simulations", json=sim_payload)
-
                     if save_response.status_code != 201:
                         st.error("Simulation did not save.")
-                        st.write(save_response.status_code)
-                        st.write(save_response.text)
                     else:
                         st.success("Simulation saved.")
                     st.rerun()
@@ -362,10 +365,10 @@ def show_prediction(prefix, step_key):
     p = st.session_state.get(f"{prefix}_prediction")
 
     if p:
-        predicted = p["predicted"]
-        similar = p["similar"]
+        predicted      = p["predicted"]
+        similar        = p["similar"]
         similar_turnout = p["similar_turnout"]
-        country = p["country"]
+        country        = p["country"]
 
         st.write(f"### Results for **{country}**")
         st.divider()
@@ -378,7 +381,7 @@ def show_prediction(prefix, step_key):
         st.divider()
         show_comparison(p.get("comparison"), country)
         st.divider()
-        show_turnout_heatmap()
+        show_turnout_heatmap(key=f"{prefix}_heatmap")
         st.divider()
 
         if st.button("← Try Again", type="primary", key=f"{prefix}_try_again"):
@@ -402,17 +405,16 @@ with tab1:
         for row in dataset:
             country_full = COUNTRY_NAMES.get(row["country"], row["country"])
             label = f"{country_full} {row['year']}"
-
             country_profiles[label] = {
-                "country_name": country_full,
-                "population": row["population"],
-                "median_age": int(float(row["median_age"])),
-                "unemployment_rate": round(float(row["unemployment_rate"])),
-                "compulsory_voting": "Yes" if row["compulsory_voting"] == 1 else "No",
+                "country_name":        country_full,
+                "population":          row["population"],
+                "median_age":          int(float(row["median_age"])),
+                "unemployment_rate":   round(float(row["unemployment_rate"])),
+                "compulsory_voting":   "Yes" if row["compulsory_voting"] == 1 else "No",
                 "region": (
                     "Northern" if row["region_northern"] == 1 else
                     "Southern" if row["region_southern"] == 1 else
-                    "Western" if row["region_western"] == 1 else
+                    "Western"  if row["region_western"]  == 1 else
                     "Eastern"
                 ),
                 "nat_election_turnout": round(float(row["national_turnout"])),
@@ -432,38 +434,34 @@ with tab1:
         else:
             if st.session_state["guided_profile_loaded"] != selected_profile:
                 p = country_profiles[selected_profile]
-
-                if "g_country_name" not in st.session_state:
-                    st.session_state["g_country_name"] = p["country_name"]
-                st.session_state["g_population"] = int(float(p["population"]))
-                st.session_state["g_median_age"] = int(float(p["median_age"]))
-                st.session_state["g_unemployment_rate"] = int(round(float(p["unemployment_rate"])))
-                st.session_state["g_compulsory_voting"] = p["compulsory_voting"]
-                st.session_state["g_region"] = p["region"]
-                st.session_state["g_nat_election_turnout"] = int(round(float(p["nat_election_turnout"])))
-
-                st.session_state["guided_step"] = 0
-                st.session_state["guided_profile_loaded"] = selected_profile
+                st.session_state["g_sv_country_name"]         = p["country_name"]
+                st.session_state["g_sv_population"]           = int(float(p["population"]))
+                st.session_state["g_sv_median_age"]           = int(float(p["median_age"]))
+                st.session_state["g_sv_unemployment_rate"]    = int(round(float(p["unemployment_rate"])))
+                st.session_state["g_sv_compulsory_voting"]    = p["compulsory_voting"]
+                st.session_state["g_sv_region"]               = p["region"]
+                st.session_state["g_sv_nat_election_turnout"] = int(round(float(p["nat_election_turnout"])))
+                st.session_state["guided_step"]               = 0
+                st.session_state["guided_profile_loaded"]     = selected_profile
                 st.rerun()
 
             st.divider()
             run_step_simulation("g", "guided_step")
-
 
 with tab2:
     st.write("### Custom Simulation")
     st.write("Start from scratch and build your country one question at a time. View your creations in 'Your Simulations.'")
 
     if "custom_defaults_loaded" not in st.session_state:
-        st.session_state["c_country_name"] = ""
-        st.session_state["c_population"] = 5000000
-        st.session_state["c_median_age"] = 40
-        st.session_state["c_unemployment_rate"] = 10
-        st.session_state["c_compulsory_voting"] = "No"
-        st.session_state["c_region"] = "Eastern"
-        st.session_state["c_nat_election_turnout"] = 60
-        st.session_state["custom_step"] = 0
-        st.session_state["custom_defaults_loaded"] = True
+        st.session_state["c_sv_country_name"]         = ""
+        st.session_state["c_sv_population"]           = 5000000
+        st.session_state["c_sv_median_age"]           = 40
+        st.session_state["c_sv_unemployment_rate"]    = 10
+        st.session_state["c_sv_compulsory_voting"]    = "No"
+        st.session_state["c_sv_region"]               = "Eastern"
+        st.session_state["c_sv_nat_election_turnout"] = 60
+        st.session_state["custom_step"]               = 0
+        st.session_state["custom_defaults_loaded"]    = True
 
     if not show_prediction("c", "custom_step"):
         run_step_simulation("c", "custom_step")
@@ -474,18 +472,17 @@ with tab3:
 
     if simulations:
         st.write("### Your Past Simulations")
-
         for sim in simulations:
             with st.expander(f"🌍 {sim.get('countryName', 'Unknown')}"):
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Predicted Turnout", f"{sim.get('predictedTurnout', 'N/A')}%")
-                col2.metric("National Turnout", f"{sim.get('nationalTurnout', 'N/A')}%")
+                col2.metric("National Turnout",  f"{sim.get('nationalTurnout', 'N/A')}%")
                 col3.metric("Unemployment Rate", f"{sim.get('unemploymentRate', 'N/A')}%")
 
                 col4, col5, col6 = st.columns(3)
-                col4.metric("Population", f"{sim.get('population', 'N/A'):,}")
-                col5.metric("Median Age", sim.get('medianAge', 'N/A'))
-                col6.metric("Region", sim.get('region', 'N/A'))
+                col4.metric("Population",  f"{sim.get('population', 'N/A'):,}")
+                col5.metric("Median Age",  sim.get('medianAge', 'N/A'))
+                col6.metric("Region",      sim.get('region', 'N/A'))
 
                 st.write(f"**Compulsory Voting:** {'Yes' if sim.get('compulsoryVoting') else 'No'}")
     else:
