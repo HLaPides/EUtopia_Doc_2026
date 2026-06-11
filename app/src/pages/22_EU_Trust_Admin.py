@@ -80,12 +80,19 @@ st.divider()
 
 # bar chart by education level
 if 'educationLevel' in df.columns:
-    all_edu = ['Middle School', 'High School', "Bachelor's", "Master's", 'Doctorate']
+    
     edu_trust = df.groupby('educationLevel')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     edu_trust.columns = ['Education Level', 'Trust Rate']
     edu_trust['Trust Rate'] = edu_trust['Trust Rate'].round(1)
+    all_edu = ['Middle School', 'High School', "Bachelor's", "Master's", 'Doctorate']
+    edu_all_df = pd.DataFrame({'Education Level': all_edu})
+    edu_trust = edu_all_df.merge(edu_trust, on='Education Level', how='left')
+
     edu_display = edu_trust.copy()
-    edu_display['Trust Rate Display'] = edu_display['Trust Rate'].apply(lambda x: max(x, 2) if x == 0 else x)
+    edu_display['Trust Rate Display'] = edu_display['Trust Rate'].apply(
+        lambda x: None if pd.isna(x) else (2 if x == 0 else x)
+    )
+    edu_display['Trust Rate'] = edu_display['Trust Rate'].fillna(-1)  # sentinel for color
     fig2 = px.bar(
         edu_display,
         x='Education Level',
@@ -104,23 +111,32 @@ st.divider()
 if 'politicalAffiliation' in df.columns:
     pol_trust = df.groupby('politicalAffiliation')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     pol_trust.columns = ['Left-Right (1-10)', 'Trust Rate']
+    pol_trust = pol_trust.dropna(subset=['Left-Right (1-10)'])
+    pol_trust['Left-Right (1-10)'] = pd.to_numeric(pol_trust['Left-Right (1-10)'], errors='coerce').dropna().astype(int)
     pol_trust['Trust Rate'] = pol_trust['Trust Rate'].round(1)
-    
-pol_display = pol_trust.copy()
-pol_display['Trust Rate Display'] = pol_display['Trust Rate'].apply(lambda x: 2 if x == 0 else x)
 
-fig3 = px.bar(
-    pol_display,
-    x='Left-Right (1-10)',
-    y='Trust Rate Display',
-    title='EU Trust Rate by Political Orientation (%)',
-    color='Trust Rate',
-    color_continuous_scale='RdYlGn',
-    range_x=[0.5, 10.5],
-    range_y=[0, 100],
-    range_color=[0, 100]
-)
-st.plotly_chart(fig3, use_container_width=True, key="pol_chart")
+    all_lr = list(range(1, 11))
+    lr_all_df = pd.DataFrame({'Left-Right (1-10)': all_lr})
+    pol_trust = lr_all_df.merge(pol_trust, on='Left-Right (1-10)', how='left')
+
+    pol_display = pol_trust.copy()
+    pol_display['Trust Rate Display'] = pol_display['Trust Rate'].apply(
+        lambda x: None if pd.isna(x) else (2 if x == 0 else x)
+    )
+    pol_display['Trust Rate'] = pol_display['Trust Rate'].fillna(-1)
+
+    fig3 = px.bar(
+        pol_display,
+        x='Left-Right (1-10)',
+        y='Trust Rate Display',
+        title='EU Trust Rate by Political Orientation (%)',
+        color='Trust Rate',
+        color_continuous_scale='RdYlGn',
+        range_x=[0.5, 10.5],
+        range_y=[0, 100],
+        range_color=[0, 100]
+    )
+    st.plotly_chart(fig3, use_container_width=True, key="pol_chart")
 
 st.divider()
 
