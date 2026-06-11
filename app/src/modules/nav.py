@@ -25,7 +25,7 @@ def student_home_nav():
 
 def country_simulation_nav():
     st.sidebar.page_link(
-        "pages/01_Country_Simulation.py", label="Country Simulation", icon="📍"
+        "pages/01_Country_Simulation.py", label="Country Simulation", icon="🌎"
     )
 
 
