@@ -22,6 +22,9 @@ Our mission is simple: make civic education engaging, data-driven, and meaningfu
 
 EUtopia: learn the EU by experiencing it. 🇪🇺
 
+### Contributions
+
+- [Team Member Contributions](contributions.md)
 ## Getting Started
 
 1. Clone the repository
