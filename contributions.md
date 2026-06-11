@@ -7,6 +7,11 @@ As development progressed, I implemented the initial routes that formed the basi
 
 
 ### Vineeth Kanpa
+Over the course of this program, my primary technical contributions centered around building and integrating the machine learning models into our platform. For Model 1, the Voter Turnout Predictor, I merged and cleaned datasets of historical European Parliament election data across all 27 EU member states, supplmented with national election turnout data from the IDEA Voter Turnout Database and socioeconomic indicators from World Bank and Transparency International. I trained an initial Random Forest Regressor using scikit-learn and spent significant time on hyperparameter tuning to reduce overfitting, though Bennett ultimately developed a stronger linear regression implementation that was adopted as the final version. I also implemented a KNN similar country feature that finds the most similar real EU country to a user's hypothetical country based on all 11 input features.
+
+For Model 2, the EU Trust Classifier, I built a logistic regression model trained on over 20,000 Eurobarometer survey responses that predicts whether an individual trusts the European Union based on five features: education level, trust in national parliament, trust in politicians, satisfaction with democracy, and left-right political orientation. Building the model involved data cleaning, iterative feature engineering, and validation through a correlation heatmap and boxplot outlier analysis. The boxplot revealed that values of 97 and 98 in the left-right feature were sentinel codes that needed to be removed. The final model achieved a testing accuracy of 73.2%.
+
+On the application side, I built the student-facing Diagnostic Survey page that collects user responses and calls the model, displaying whether the student is predicted to trust the EU (this avoids social desirability bias). I also built the EU official admin dashboard that visualizes aggregated survey results through a gauge chart, an education-level bar chart, and a political orientation bar chart. These were all filtered to only show the most recent response per student.
 
 ### Bennett LaPides
 

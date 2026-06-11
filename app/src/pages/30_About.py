@@ -47,7 +47,7 @@ with col1:
 with col2:
     st.image("assets/vineeth.png", width=250)
     st.subheader("Vineeth Kanpa")
-    st.write("Machine Learning & Backend")
+    st.write("I'm a rising second-year majoring in Data Science and Business Administration. I handled backend and machine learning development for EUtopia, as well as data visualization.")
 
 with col3:
     st.image("assets/bennett.png", width=250)
