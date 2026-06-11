@@ -69,25 +69,25 @@ for lesson in filtered:
             st.write(lesson.get("content", ""))
 
     with col2:
-        if st.button("Approve", key=f"approve_{lesson['lessonID']}", type="primary", use_container_width=True):
+        if st.button("✅ Approve", key=f"approve_{lesson['lessonID']}", type="primary", use_container_width=True):
             try:
                 requests.put(
                     f"{BASE_URL}/lessons/{lesson['lessonID']}/approve",
                     json={"officialID": st.session_state['userID']}
                 )
-                st.success("Approved")
+                st.toast(f"✅ Approved: {lesson.get('title')}", icon="✅")
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
 
     with col3:
-        if st.button("Reject", key=f"reject_{lesson['lessonID']}", type="secondary", use_container_width=True):
+        if st.button("❌ Reject", key=f"reject_{lesson['lessonID']}", type="secondary", use_container_width=True):
             try:
                 requests.put(
                     f"{BASE_URL}/lessons/{lesson['lessonID']}/reject",
                     json={"officialID": st.session_state['userID']}
                 )
-                st.warning("Rejected")
+                st.toast(f"❌ Rejected: {lesson.get('title')}", icon="❌")
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
