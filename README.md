@@ -21,3 +21,7 @@ Behind the scenes, EUtopia combines a relational database, REST APIs, interactiv
 Our mission is simple: make civic education engaging, data-driven, and meaningful so that future European citizens feel informed, confident, and ready to participate in democracy.
 
 EUtopia: learn the EU by experiencing it. 🇪🇺
+
+### Contributions
+
+- [Team Member Contributions](contributions.md)
