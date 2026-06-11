@@ -76,12 +76,6 @@ def _load_dataset() -> pd.DataFrame:
     """
     Loads the voter turnout training data from eu_turnout_dataset in the DB
     and engineers the derived features needed by the model.
-
-    Returns:
-        pd.DataFrame with all FEATURES + TARGET + country + year columns
-
-    Raises:
-        ValueError: if no training data exists in the database.
     """
     with get_db().cursor(dictionary=True) as cursor:
         cursor.execute(
@@ -106,15 +100,6 @@ def _load_dataset() -> pd.DataFrame:
 
 
 def _get_params() -> np.ndarray:
-    """
-    Fetches the most recent coefficient vector from voter_turnout_params.
-
-    Returns:
-        np.ndarray: 1-D array of length 12 [intercept, b1, ..., b11]
-
-    Raises:
-        ValueError: if no parameters exist in the database yet.
-    """
     with get_db().cursor(dictionary=True) as cursor:
         cursor.execute(
             'SELECT beta_vals FROM voter_turnout_params '
@@ -131,17 +116,6 @@ def _get_params() -> np.ndarray:
 
 
 def _get_scaler_params() -> tuple[np.ndarray, np.ndarray]:
-    """
-    Fetches the most recent scaler parameters from voter_turnout_scaler.
-    These are the mean and std of each feature at training time, needed
-    to apply the same standardization to user inputs at prediction time.
-
-    Returns:
-        tuple: (means, stds) as np.ndarrays of length 11 (one per feature)
-
-    Raises:
-        ValueError: if no scaler parameters exist in the database yet.
-    """
     with get_db().cursor(dictionary=True) as cursor:
         cursor.execute(
             'SELECT feature_means, feature_stds FROM voter_turnout_scaler '
@@ -167,13 +141,6 @@ def _engineer_features(
     region_southern: int,
     region_western: int,
 ) -> np.ndarray:
-    """
-    Builds the full 11-feature vector from raw inputs, applying the same
-    transformations used at training time (squared terms, interaction term).
-
-    Returns:
-        np.ndarray: 1-D array of length 11 in the same order as FEATURES
-    """
     compulsory_x_western = compulsory_voting * region_western
     median_age_sq        = median_age ** 2
     national_turnout_sq  = national_turnout ** 2
@@ -197,10 +164,7 @@ def _load_knn() -> None:
     """
     Loads the dataset from the DB, fits a StandardScaler and KNN model
     in memory. Called lazily by find_similar_country() on first use.
-
-    Lightweight — does not refit OLS or write to the DB. Keeps KNN state
-    separate from OLS training so find_similar_country() doesn't trigger
-    a full model retrain on every container restart.
+    Stores full feature data so find_similar_country() can return a comparison.
     """
     global _knn, _knn_scaler, _knn_df
 
@@ -212,29 +176,18 @@ def _load_knn() -> None:
 
     _knn    = NearestNeighbors(n_neighbors=1, metric='euclidean')
     _knn.fit(X_scaled)
-    _knn_df = df[['country', 'year', 'voter_turnout']].reset_index(drop=True)
+    _knn_df = df[[
+        'country', 'year', 'voter_turnout',
+        'compulsory_voting', 'median_age', 'national_turnout',
+        'unemployment_rate', 'population'
+    ]].reset_index(drop=True)
+
+
+# ============================================================
+# PUBLIC FUNCTIONS
+# ============================================================
 
 def train(data_path: str = None) -> dict:
-    """
-    Retrains the OLS model and writes the new coefficients and scaler
-    parameters to the DB atomically. If either DB write fails, both are
-    rolled back. Does not retrain KNN — KNN is loaded separately and lazily.
-
-    Args:
-        data_path: optional path to a CSV file. If provided, reads from
-                   the file instead of the DB. Used when the EU official
-                   uploads a new dataset via the admin route.
-
-    Returns:
-        dict: {
-            'r2_train': float,
-            'mse_train': float,
-            'n': int
-        }
-
-    Raises:
-        Exception: if DB writes fail, rolls back and re-raises.
-    """
     if data_path is not None:
         df = pd.read_csv(data_path)
         df["median_age_sq"]        = df["median_age"] ** 2
@@ -292,18 +245,6 @@ def train(data_path: str = None) -> dict:
 
 
 def test() -> dict:
-    """
-    Runs LOO-CV on the full dataset from the DB and returns performance
-    metrics. LOO-CV is used because the dataset is relatively small
-    (184 observations) so a single train/test split would be unreliable.
-
-    Returns:
-        dict: {
-            'loo_cv_r2':  float,   # target: ~0.79
-            'loo_cv_mse': float,   # target: ~77.61
-            'n':          int
-        }
-    """
     df = _load_dataset()
     X  = df[FEATURES].values
     y  = df[TARGET].values
@@ -328,6 +269,7 @@ def test() -> dict:
         'n':          len(y),
     }
 
+
 def predict(
     compulsory_voting: int,
     median_age: float,
@@ -338,25 +280,6 @@ def predict(
     region_southern: int,
     region_western: int,
 ) -> float:
-    """
-    Returns a single voter turnout prediction given the input features.
-    Reads model parameters and scaler values from the DB.
-
-    Args:
-        compulsory_voting : 1 if compulsory voting is enforced, 0 otherwise
-        median_age        : median age of the population
-        national_turnout  : national election turnout (%)
-        unemployment_rate : unemployment rate (%)
-        population        : country population
-        region_northern   : 1 if Northern Europe, 0 otherwise
-        region_southern   : 1 if Southern Europe, 0 otherwise
-        region_western    : 1 if Western Europe, 0 otherwise
-                            (Eastern Europe is the reference category,
-                            all three region flags = 0)
-
-    Returns:
-        float: predicted voter turnout (%)
-    """
     params      = _get_params()
     means, stds = _get_scaler_params()
 
@@ -384,17 +307,8 @@ def find_similar_country(
     region_western: int,
 ) -> dict:
     """
-    Finds the most similar real country-year observation to the given
-    hypothetical country using KNN on the scaled feature space.
-    Loads KNN lazily on first call from the DB without triggering
-    a full OLS retrain.
-
-    Returns:
-        dict: {
-            'country':       str,
-            'year':          int,
-            'voter_turnout': float
-        }
+    Finds the most similar real country-year observation using KNN.
+    Returns country info plus feature values for side-by-side comparison.
     """
     global _knn, _knn_scaler, _knn_df
 
@@ -412,29 +326,21 @@ def find_similar_country(
     match = _knn_df.iloc[indices[0][0]]
 
     return {
-        'country':       COUNTRY_NAMES.get(match['country'], match['country']),
-        'year':          int(match['year']),
-        'voter_turnout': round(float(match['voter_turnout']), 1)
+        'country':          COUNTRY_NAMES.get(match['country'], match['country']),
+        'year':             int(match['year']),
+        'voter_turnout':    round(float(match['voter_turnout']), 1),
+        'median_age':       round(float(match['median_age']), 1),
+        'national_turnout': round(float(match['national_turnout']), 1),
+        'unemployment_rate': round(float(match['unemployment_rate']), 1),
+        'population':       int(match['population']),
+        'compulsory_voting': int(match['compulsory_voting']),
     }
 
 
 def predict_turnout(data: dict) -> dict:
     """
-    Dict-based wrapper for the Flask route. Calls both predict() and
-    find_similar_country() and returns a combined response.
-
-    Args:
-        data: dict with keys:
-            compulsory_voting, median_age, national_turnout,
-            unemployment_rate, population, region_northern,
-            region_southern, region_western
-
-    Returns:
-        dict: {
-            'predicted_turnout':       float,
-            'similar_country':         str,
-            'similar_country_turnout': float
-        }
+    Dict-based wrapper for the Flask route. Returns prediction, similar
+    country, and a side-by-side feature comparison.
     """
     kwargs = dict(
         compulsory_voting = int(data.get("compulsory_voting", 0)),
@@ -449,9 +355,26 @@ def predict_turnout(data: dict) -> dict:
 
     prediction = predict(**kwargs)
     similar    = find_similar_country(**kwargs)
+    country_label = f"{similar['country']} ({similar['year']})"
 
     return {
         'predicted_turnout':       round(max(0.0, min(100.0, prediction)), 2),
-        'similar_country':         f"{similar['country']} ({similar['year']})",
+        'similar_country':         country_label,
         'similar_country_turnout': similar['voter_turnout'],
+        'comparison': {
+            'input': {
+                'Median Age':        kwargs['median_age'],
+                'National Turnout %': kwargs['national_turnout'],
+                'Unemployment %':    kwargs['unemployment_rate'],
+                'Population':        int(kwargs['population']),
+                'Compulsory Voting': 'Yes' if kwargs['compulsory_voting'] else 'No',
+            },
+            country_label: {
+                'Median Age':        similar['median_age'],
+                'National Turnout %': similar['national_turnout'],
+                'Unemployment %':    similar['unemployment_rate'],
+                'Population':        similar['population'],
+                'Compulsory Voting': 'Yes' if similar['compulsory_voting'] else 'No',
+            }
+        }
     }

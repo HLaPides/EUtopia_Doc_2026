@@ -103,4 +103,4 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
             else:
                 st.error("❌ Based on your responses, you are predicted to **not trust** the EU.")
         else:
-            st.error("Something went wrong. Please try again.")
+            st.error("Something went wrong. Please try again.") 

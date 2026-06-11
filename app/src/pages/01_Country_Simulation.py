@@ -11,12 +11,24 @@ st.set_page_config(layout='wide')
 SideBarLinks()
 
 BASE_URL = "http://web-api:4000"
-
 student_id = st.session_state['userID']
 simulations = requests.get(f"{BASE_URL}/simulations/{student_id}").json()
 
 st.header('Build Your Own Country')
 st.write('### Fill in the values to predict EU Election Turnout for your created country')
+
+TABLE_STYLES = [
+    {'selector': 'table', 'props': [('width', '100%'), ('border-collapse', 'collapse')]},
+    {'selector': 'th', 'props': [('background-color', '#1a1a2e'), ('color', 'white'), ('padding', '10px'), ('text-align', 'center')]},
+    {'selector': 'td', 'props': [('padding', '8px 12px'), ('text-align', 'center')]},
+    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f5f5f5')]},
+]
+
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["Guided Simulation", "Custom Simulation", "Your Simulations"])
 
@@ -335,7 +347,7 @@ with tab1:
 
 with tab2:
     st.write("### Custom Simulation")
-    st.write("Start from scratch and build your country one question at a time.")
+    st.write("Start from scratch and build your country one question at a time. View your creations in 'Your Simulations.'")
 
     if "custom_defaults_loaded" not in st.session_state:
         st.session_state["c_country_name"] = ""

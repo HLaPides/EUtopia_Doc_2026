@@ -156,3 +156,19 @@ def create_simulation():
     cursor.close()
 
     return jsonify({"message": "simulation saved"}), 201
+
+
+
+@apiinit_bp.route("/questions/<int:questionID>/options", methods=["GET"])
+def get_question_options(questionID):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT optionID, optionText, isCorrect FROM QuestionOption WHERE questionID = %s",
+        (questionID,)
+    )
+
+    options = cursor.fetchall()
+    cursor.close()
+    return jsonify(options)
