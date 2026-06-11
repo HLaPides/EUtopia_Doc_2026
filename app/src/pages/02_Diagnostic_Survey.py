@@ -84,8 +84,6 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
         }
         ml_response = requests.post(f"{BASE_URL}/ml/trust-prediction", json=ml_payload)
         predicted_trust = ml_response.json().get("prediction") if ml_response.status_code == 200 else None
-        st.write("ML payload:", ml_payload)
-        st.write("ML response:", ml_response.json())
 
         # save survey
         payload = {

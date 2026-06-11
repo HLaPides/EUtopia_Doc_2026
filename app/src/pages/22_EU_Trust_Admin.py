@@ -63,16 +63,20 @@ st.divider()
 
 # bar chart by education level
 if 'educationLevel' in df.columns:
-    edu_trust = df.groupby('educationLevel')['predictedTrust'].mean().reset_index()
+    all_edu = ['Middle School', 'High School', "Bachelor's", "Master's", 'Doctorate']
+    edu_trust = df.groupby('educationLevel')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     edu_trust.columns = ['Education Level', 'Trust Rate']
-    edu_trust['Trust Rate'] = (edu_trust['Trust Rate'] * 100).round(1)
+    edu_trust['Trust Rate'] = edu_trust['Trust Rate'].round(1)
     fig2 = px.bar(
         edu_trust,
         x='Education Level',
         y='Trust Rate',
         title='EU Trust Rate by Education Level (%)',
         color='Trust Rate',
-        color_continuous_scale='RdYlGn'
+        color_continuous_scale='RdYlGn',
+        range_y=[0, 100],
+        range_color=[0, 100],
+        category_orders={'Education Level': all_edu}
     )
     st.plotly_chart(fig2, use_container_width=True)
 
@@ -80,17 +84,18 @@ st.divider()
 
 # bar chart by political affiliation
 if 'politicalAffiliation' in df.columns:
-    pol_trust = df.groupby('politicalAffiliation')['predictedTrust'].mean().reset_index()
+    pol_trust = df.groupby('politicalAffiliation')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     pol_trust.columns = ['Left-Right (1-10)', 'Trust Rate']
-    pol_trust['Trust Rate'] = (pol_trust['Trust Rate'] * 100).round(1)
+    pol_trust['Trust Rate'] = pol_trust['Trust Rate'].round(1)
+    
     fig3 = px.bar(
-    pol_trust,
-    x='Left-Right (1-10)',
-    y='Trust Rate',
-    title='EU Trust Rate by Political Orientation (%)',
-    color='Trust Rate',
-    color_continuous_scale='RdYlGn',
-    range_x=[0.5, 10.5]
+        pol_trust,
+        x='Left-Right (1-10)',
+        y='Trust Rate',
+        title='EU Trust Rate by Political Orientation (%)',
+        color='Trust Rate',
+        color_continuous_scale='RdYlGn',
+        range_x=[0.5, 10.5]
     )
     st.plotly_chart(fig3, use_container_width=True)
 
