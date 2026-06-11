@@ -51,13 +51,30 @@ with col3:
 st.divider()
 
 # pie chart
-fig = px.pie(
-    values=[trusting, not_trusting],
-    names=["Does Not Trust EU", "Trusts EU"],
-    color_discrete_sequence=["#e74c3c", "#2ecc71"],
-    title="Student EU Trust Distribution"
-)
-st.plotly_chart(fig, use_container_width=True)
+import plotly.graph_objects as go
+
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=percent,
+    title={'text': "% of Students Who Trust the EU"},
+    gauge={
+        'axis': {'range': [0, 100]},
+        'bar': {'color': "#1a7a3c"},
+        'steps': [
+            {'range': [0, 33], 'color': "#e74c3c"},
+            {'range': [33, 66], 'color': "#f39c12"},
+            {'range': [66, 100], 'color': "#2ecc71"}
+        ],
+        'threshold': {
+            'line': {'color': "black", 'width': 4},
+            'thickness': 0.75,
+            'value': percent
+        }
+    }
+))
+
+st.plotly_chart(fig, use_container_width=True, key="gauge")
+
 
 st.divider()
 
@@ -67,37 +84,43 @@ if 'educationLevel' in df.columns:
     edu_trust = df.groupby('educationLevel')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     edu_trust.columns = ['Education Level', 'Trust Rate']
     edu_trust['Trust Rate'] = edu_trust['Trust Rate'].round(1)
+    edu_display = edu_trust.copy()
+    edu_display['Trust Rate Display'] = edu_display['Trust Rate'].apply(lambda x: max(x, 2) if x == 0 else x)
     fig2 = px.bar(
-        edu_trust,
+        edu_display,
         x='Education Level',
-        y='Trust Rate',
+        y='Trust Rate Display',
         title='EU Trust Rate by Education Level (%)',
         color='Trust Rate',
         color_continuous_scale='RdYlGn',
         range_y=[0, 100],
         range_color=[0, 100],
         category_orders={'Education Level': all_edu}
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+)
+    st.plotly_chart(fig2, use_container_width=True, key="edu_chart")
 
 st.divider()
 
-# bar chart by political affiliation
 if 'politicalAffiliation' in df.columns:
     pol_trust = df.groupby('politicalAffiliation')['predictedTrust'].apply(lambda x: (x == 0).mean() * 100).reset_index()
     pol_trust.columns = ['Left-Right (1-10)', 'Trust Rate']
     pol_trust['Trust Rate'] = pol_trust['Trust Rate'].round(1)
     
-    fig3 = px.bar(
-        pol_trust,
-        x='Left-Right (1-10)',
-        y='Trust Rate',
-        title='EU Trust Rate by Political Orientation (%)',
-        color='Trust Rate',
-        color_continuous_scale='RdYlGn',
-        range_x=[0.5, 10.5]
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+pol_display = pol_trust.copy()
+pol_display['Trust Rate Display'] = pol_display['Trust Rate'].apply(lambda x: 2 if x == 0 else x)
+
+fig3 = px.bar(
+    pol_display,
+    x='Left-Right (1-10)',
+    y='Trust Rate Display',
+    title='EU Trust Rate by Political Orientation (%)',
+    color='Trust Rate',
+    color_continuous_scale='RdYlGn',
+    range_x=[0.5, 10.5],
+    range_y=[0, 100],
+    range_color=[0, 100]
+)
+st.plotly_chart(fig3, use_container_width=True, key="pol_chart")
 
 st.divider()
 
