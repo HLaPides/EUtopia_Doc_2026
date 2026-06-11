@@ -74,7 +74,7 @@ def show_comparison(comparison: dict, country_name: str = "Your Country"):
     )
 
 
-def show_turnout_heatmap(key: str = "heatmap"):
+def show_turnout_heatmap():
     turnout_2024 = {
         'Belgium': 89.0, 'Luxembourg': 84.1, 'Malta': 72.8,
         'Italy': 49.7, 'Denmark': 58.7, 'Germany': 64.8,
@@ -127,7 +127,7 @@ def show_turnout_heatmap(key: str = "heatmap"):
             lataxis=dict(range=[34, 72]),
         )
     )
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def make_steps(prefix):
@@ -269,24 +269,36 @@ def run_step_simulation(prefix, step_key):
 
     with col_next:
         if step < total_steps - 1:
-            if st.button("Next →", type="primary", use_container_width=True):
-                # validate current input before moving on
+            if st.button("Next →", type="primary", use_container_width=True, key=f"{prefix}_next"):
                 valid = True
-                if current["key"] == "g_median_age":
-                    if st.session_state.get("g_median_age", 0) < 18:
-                        st.error("Median age must be at least 18.")
+                error_msg = None
+
+                if key == f"{prefix}_country_name":
+                    if not st.session_state.get(key, "").strip():
+                        error_msg = "Please enter a country name."
                         valid = False
-                if current["key"] == "g_population":
-                    if st.session_state.get("g_population", 0) <= 0:
-                        st.error("Population must be greater than 0.")
+                elif key == f"{prefix}_population":
+                    if st.session_state.get(key, 0) <= 0:
+                        error_msg = "Population must be greater than 0."
                         valid = False
-                if current["key"] == "g_country_name":
-                    if not st.session_state.get("g_country_name", "").strip():
-                        st.error("Please enter a country name.")
+                elif key == f"{prefix}_median_age":
+                    age_val = st.session_state.get(key, 0)
+                    if age_val < 18:
+                        error_msg = "Median age must be at least 18."
                         valid = False
+                    elif age_val > 100:
+                        error_msg = "Median age must be 100 or less."
+                        valid = False
+
                 if valid:
-                    st.session_state["guided_step"] += 1
+                    st.session_state.pop(f"{prefix}_error", None)
+                    st.session_state[step_key] += 1
                     st.rerun()
+                else:
+                    st.session_state[f"{prefix}_error"] = error_msg
+                    st.rerun()
+            if st.session_state.get(f"{prefix}_error"):
+                st.error(st.session_state[f"{prefix}_error"])
         else:
             if st.button("Predict EU Election Turnout", type="primary", use_container_width=True, key=f"{prefix}_predict"):
                 region_val = st.session_state.get(f"{prefix}_region", "Eastern")
@@ -366,7 +378,7 @@ def show_prediction(prefix, step_key):
         st.divider()
         show_comparison(p.get("comparison"), country)
         st.divider()
-        show_turnout_heatmap(key=f"{prefix}_heatmap")
+        show_turnout_heatmap()
         st.divider()
 
         if st.button("← Try Again", type="primary", key=f"{prefix}_try_again"):
