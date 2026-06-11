@@ -36,8 +36,8 @@ st.dataframe(df[['firstName', 'lastName', 'Predicted EU Trust']], use_container_
 
 # metrics
 total = len(df)
-trusting = int((df['predictedTrust'] == 1).sum())
-not_trusting = int((df['predictedTrust'] == 0).sum())
+trusting = int((df['predictedTrust'] == 0).sum())
+not_trusting = int((df['predictedTrust'] == 1).sum())
 percent = (trusting / total) * 100 if total > 0 else 0
 
 col1, col2, col3 = st.columns(3)
