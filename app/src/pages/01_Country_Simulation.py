@@ -153,7 +153,7 @@ def make_steps(prefix):
             "description": "The median age of a population is one of the strongest predictors of voter turnout. Older populations tend to vote at significantly higher rates than younger ones, older citizens often feel more invested in political outcomes and have more stable voting habits. The EU average median age is around 44 years.",
             "type": "number",
             "default": 40,
-            "min": 18,
+            "min": 0,
             "step": 1
         },
         {
@@ -269,17 +269,23 @@ def run_step_simulation(prefix, step_key):
 
     with col_next:
         if step < total_steps - 1:
-            if st.button("Next →", type="primary", use_container_width=True, key=f"{prefix}_next"):
-                if key == f"{prefix}_country_name":
-                    typed_name = st.session_state.get(key, "").strip()
-                    if not typed_name:
+            if st.button("Next →", type="primary", use_container_width=True):
+                # validate current input before moving on
+                valid = True
+                if current["key"] == "g_median_age":
+                    if st.session_state.get("g_median_age", 0) < 18:
+                        st.error("Median age must be at least 18.")
+                        valid = False
+                if current["key"] == "g_population":
+                    if st.session_state.get("g_population", 0) <= 0:
+                        st.error("Population must be greater than 0.")
+                        valid = False
+                if current["key"] == "g_country_name":
+                    if not st.session_state.get("g_country_name", "").strip():
                         st.error("Please enter a country name.")
-                    else:
-                        st.session_state[f"{prefix}_saved_country_name"] = typed_name
-                        st.session_state[step_key] += 1
-                        st.rerun()
-                else:
-                    st.session_state[step_key] += 1
+                        valid = False
+                if valid:
+                    st.session_state["guided_step"] += 1
                     st.rerun()
         else:
             if st.button("Predict EU Election Turnout", type="primary", use_container_width=True, key=f"{prefix}_predict"):
