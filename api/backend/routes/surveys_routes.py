@@ -43,6 +43,11 @@ def get_surveys():
         SELECT ds.*, u.firstName, u.lastName
         FROM DiagnosticSurvey ds
         JOIN Users u ON ds.studentID = u.userID
+        WHERE ds.surveyID IN (
+            SELECT MAX(surveyID)
+            FROM DiagnosticSurvey
+            GROUP BY studentID
+        )
         ORDER BY ds.createdAt DESC
     """)
     surveys = cursor.fetchall()

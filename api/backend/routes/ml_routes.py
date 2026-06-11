@@ -2,7 +2,6 @@ from flask import Blueprint, jsonify, current_app, request
 from backend.db_connection import get_db
 from backend.ml_models.eu_trust_model import train as trust_train, test as trust_test, FEATURES as trust_features, predict_trust
 from backend.ml_models.voter_turnout_model import train as vt_train, test as vt_test, FEATURES as vt_features, predict_turnout
-from backend.ml_models.eu_trust_model import predict_trust
 
 ml_bp = Blueprint("ml", __name__)
 
