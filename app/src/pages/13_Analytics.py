@@ -10,6 +10,12 @@ st.set_page_config(layout='wide')
 
 SideBarLinks()
 
+st.markdown("""
+<style>
+    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+</style>
+""", unsafe_allow_html=True)
+
 # redirect if not logged in
 if not st.session_state.get('authenticated'):
     st.switch_page('Home.py')
@@ -84,20 +90,27 @@ col3.metric("Avg Quiz Score", f"{df['Avg Quiz Score'].mean():.1f}")
 st.divider()
 
 # ── table ─────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
 st.subheader("Student Performance")
-st.dataframe(
-    df,
-    use_container_width=True,
-    column_config={
-        "Completion %": st.column_config.ProgressColumn(
-            "Completion %",
-            min_value=0,
-            max_value=100,
-            format="%d%%",
-        ),
-        "Avg Quiz Score": st.column_config.NumberColumn(
-            "Avg Quiz Score",
-            format="%.1f",
-        ),
-    }
+df["Completion %"]   = df["Completion %"].map("{:.1f}".format)
+df["Avg Quiz Score"] = df["Avg Quiz Score"].map("{:.1f}".format)
+st.markdown(
+    '<div style="width:100%">' +
+    df.style
+    .set_properties(**{"text-align": "center"}, subset=["Lessons Assigned", "Lessons Completed", "Completion %", "Avg Quiz Score"])
+    .set_properties(**{"text-align": "left"}, subset=["Student"])
+    .set_table_styles([
+        {"selector": "table", "props": [("width", "100%"), ("border-collapse", "collapse")]},
+        {"selector": "th", "props": [("background-color", "#1a1a2e"), ("color", "white"), ("padding", "10px"), ("text-align", "center")]},
+        {"selector": "td", "props": [("padding", "8px 12px")]},
+        {"selector": "tr:nth-child(even)", "props": [("background-color", "#f5f5f5")]},
+    ])
+    .hide(axis="index")
+    .to_html() +
+    '</div>',
+    unsafe_allow_html=True
 )

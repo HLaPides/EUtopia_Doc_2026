@@ -10,6 +10,12 @@ st.set_page_config(layout='wide')
 
 SideBarLinks()
 
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
+
 if not st.session_state.get('authenticated'):
     st.switch_page('Home.py')
 
@@ -17,6 +23,13 @@ BASE_URL = "http://web-api:4000"
 teacher_id = st.session_state['userID']
 
 st.title("My Students")
+
+TABLE_STYLES = [
+    {'selector': 'table', 'props': [('width', '100%'), ('border-collapse', 'collapse')]},
+    {'selector': 'th', 'props': [('background-color', '#1a1a2e'), ('color', 'white'), ('padding', '10px'), ('text-align', 'center')]},
+    {'selector': 'td', 'props': [('padding', '8px 12px')]},
+    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f5f5f5')]},
+]
 
 try:
     classes = requests.get(f"{BASE_URL}/classes/teacher/{teacher_id}").json()
@@ -47,19 +60,83 @@ if not unique_students:
     st.info("No students found in your classes.")
     st.stop()
 
-col1, col2 = st.columns(2)
-col1.metric("Total Students", len(unique_students))
-col2.metric("Classes", len(class_ids))
+tab1, tab2 = st.tabs(["My Students", "Student Progress"])
 
-st.divider()
+# ── My Students ───────────────────────────────────────────────────────────────
+with tab1:
+    col1, col2 = st.columns(2)
+    col1.metric("Total Students", len(unique_students))
+    col2.metric("Total Classes", len(class_ids))
 
-df = pd.DataFrame([{
-    "Name":    f"{s['firstName']} {s['lastName']}",
-    "Email":   s.get("email", ""),
-    "Class":   s.get("className", ""),
-} for s in unique_students])
+    st.divider()
 
-df = df.sort_values("Class").reset_index(drop=True)
-df.index += 1
+    df = pd.DataFrame([{
+        "Name":    f"{s['firstName']} {s['lastName']}",
+        "Email":   s.get("email", ""),
+        "Country": s.get("countryOrigin", ""),
+        "Class":   s.get("className", ""),
+    } for s in unique_students])
 
-st.dataframe(df, use_container_width=True)
+    df = df.sort_values("Class").reset_index(drop=True)
+    df.index += 1
+
+    st.markdown(
+        df.style
+        .set_properties(**{'text-align': 'left'})
+        .set_table_styles(TABLE_STYLES)
+        .hide(axis='index')
+        .to_html(),
+        unsafe_allow_html=True
+    )
+
+
+# ── Student Progress ──────────────────────────────────────────────────────────
+with tab2:
+    student_options = {
+        f"{s['firstName']} {s['lastName']}": s['userID']
+        for s in unique_students
+    }
+
+    selected_student = st.selectbox("Select a Student", list(student_options.keys()))
+    student_id = student_options[selected_student]
+
+    try:
+        progress = requests.get(f"{BASE_URL}/progress/{student_id}").json()
+        all_lessons = requests.get(f"{BASE_URL}/lessons").json()
+    except Exception as e:
+        st.error(f"Could not load data: {e}")
+        st.stop()
+
+    lesson_map = {l["lessonID"]: l["title"] for l in all_lessons}
+
+    if not progress:
+        st.info(f"{selected_student} has no progress recorded yet.")
+    else:
+        df_progress = pd.DataFrame([{
+            "Lesson":           lesson_map.get(p.get("lessonID"), f"Lesson {p.get('lessonID')}"),
+            "Status":           p.get("completionStatus", ""),
+            "Quiz Score":       f"{float(p.get('quizPerformance', 0)):.2f}" if p.get("completionStatus") != "Not Started" else "N/A",
+            "Engagement (min)": f"{float(p.get('avgEngagementTime', 0)):.2f}" if p.get("completionStatus") != "Not Started" else "N/A",
+        } for p in progress])
+
+        df_progress = df_progress.sort_values("Status").reset_index(drop=True)
+        df_progress.index += 1
+
+        completed = len(df_progress[df_progress["Status"] == "Completed"])
+        total     = len(df_progress)
+
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Lessons Assigned", total)
+        col2.metric("Lessons Completed", completed)
+        col3.metric("Completion %", f"{round(completed / total * 100, 1)}%" if total > 0 else "0%")
+
+        st.divider()
+
+        st.markdown(
+            df_progress.style
+            .set_properties(**{'text-align': 'left'})
+            .set_table_styles(TABLE_STYLES)
+            .hide(axis='index')
+            .to_html(),
+            unsafe_allow_html=True
+        )

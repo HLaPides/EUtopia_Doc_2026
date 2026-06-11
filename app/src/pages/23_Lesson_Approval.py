@@ -33,18 +33,22 @@ if not pending:
 col1, col2, col3 = st.columns(3)
 
 teachers = sorted(set(l['teacherName'] for l in pending if l.get('teacherName')))
-topics   = sorted(set(l['topicName'] for l in pending if l.get('topicName')))
+topics = [
+    "Citizenship", "Economics", "European Institutions", "Governance",
+    "History", "Human Rights", "International Relations", "Media",
+    "Migration", "Public Policy", "Technology"
+]
 
 with col1:
     selected_teacher = st.selectbox("Filter by Teacher", ["All"] + teachers)
 with col2:
-    selected_topic = st.selectbox("Filter by Topic", ["All"] + topics)
+    selected_topics = st.multiselect("Filter by Topic", topics)
 
 filtered = pending
 if selected_teacher != "All":
     filtered = [l for l in filtered if l.get('teacherName') == selected_teacher]
-if selected_topic != "All":
-    filtered = [l for l in filtered if l.get('topicName') == selected_topic]
+if selected_topics:
+    filtered = [l for l in filtered if l.get('topicName') in selected_topics]
 
 st.divider()
 st.write(f"**{len(filtered)} lesson(s) pending review**")
@@ -54,12 +58,13 @@ for lesson in filtered:
     col1, col2, col3 = st.columns([4, 1, 1])
 
     with col1:
-        st.subheader(lesson.get('title'))
-        st.write(f"**Topic:** {lesson.get('topicName', 'N/A')}")
-        st.write(f"**Difficulty:** {lesson.get('difficultyLevel', 'N/A')}")
-        st.write(f"**Teacher:** {lesson.get('teacherName')} (ID: {lesson.get('teacherID')})")
+        st.write(f"**{lesson.get('title')}**")
         created = str(lesson.get('createdAt', ''))[:10]
-        st.write(f"**Submitted:** {created}")
+        st.caption(
+            f"{lesson.get('topicName')} | {lesson.get('difficultyLevel')} | "
+            f"{lesson.get('teacherName')} (ID: {lesson.get('teacherID')}) | "
+            f"Submitted {created}"
+        )
         with st.expander("View content"):
             st.write(lesson.get("content", ""))
 
