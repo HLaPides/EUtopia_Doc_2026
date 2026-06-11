@@ -25,3 +25,15 @@ EUtopia: learn the EU by experiencing it. 🇪🇺
 ### Contributions
 
 - [Team Member Contributions](contributions.md)
+## Getting Started
+
+1. Clone the repository
+2. Create a `.env` file in the root directory with the required environment variables
+3. Run `docker-compose up -d` to start all services
+4. Open your browser and navigate to `http://localhost:8501`
+
+Everything runs automatically on startup.
+
+### Blog
+Here is a link to our blog documenting the process of creating our platform:
+https://vineethkanpa07.github.io/CS4973_Project_Group7/

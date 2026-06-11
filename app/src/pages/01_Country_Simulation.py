@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 import pandas as pd
 import streamlit as st
 import requests
+import plotly.express as px
 from modules.nav import SideBarLinks
 
 st.set_page_config(layout='wide')
@@ -11,12 +12,24 @@ st.set_page_config(layout='wide')
 SideBarLinks()
 
 BASE_URL = "http://web-api:4000"
-
 student_id = st.session_state['userID']
 simulations = requests.get(f"{BASE_URL}/simulations/{student_id}").json()
 
 st.header('Build Your Own Country')
 st.write('### Fill in the values to predict EU Election Turnout for your created country')
+
+TABLE_STYLES = [
+    {'selector': 'table', 'props': [('width', '100%'), ('border-collapse', 'collapse')]},
+    {'selector': 'th', 'props': [('background-color', '#1a1a2e'), ('color', 'white'), ('padding', '10px'), ('text-align', 'center')]},
+    {'selector': 'td', 'props': [('padding', '8px 12px'), ('text-align', 'center')]},
+    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f5f5f5')]},
+]
+
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["Guided Simulation", "Custom Simulation", "Your Simulations"])
 
@@ -34,18 +47,101 @@ COUNTRY_NAMES = {
 }
 
 
+def show_comparison(comparison: dict, country_name: str = "Your Country"):
+    if not comparison:
+        return
+    st.subheader("Feature Comparison")
+    df = pd.DataFrame(comparison).T.copy()
+    df.index = df.index.map(lambda x: country_name if x == "input" else x)
+    df.index.name = "Country"
+    df = df.reset_index()
+    df = df.astype(str)
+    for col in df.columns:
+        if col in ("Country", "Compulsory Voting"):
+            continue
+        elif col == "Population":
+            df[col] = df[col].apply(lambda x: f"{int(float(x)):,}" if x not in ("nan", "") else x)
+        elif col == "National Turnout %":
+            df[col] = df[col].apply(lambda x: f"{float(x):.2f}%" if x not in ("nan", "") else x)
+        else:
+            df[col] = df[col].apply(lambda x: f"{float(x):.2f}" if x not in ("nan", "") else x)
+    st.markdown(
+        df.style
+        .set_table_styles(TABLE_STYLES)
+        .hide(axis='index')
+        .to_html(),
+        unsafe_allow_html=True
+    )
+
+
+def show_turnout_heatmap(key: str = "heatmap"):
+    turnout_2024 = {
+        'Belgium': 89.0, 'Luxembourg': 84.1, 'Malta': 72.8,
+        'Italy': 49.7, 'Denmark': 58.7, 'Germany': 64.8,
+        'Austria': 59.6, 'Sweden': 54.5, 'Ireland': 50.0,
+        'Netherlands': 46.0, 'France': 51.5, 'Spain': 49.2,
+        'Portugal': 36.4, 'Greece': 41.8, 'Finland': 40.0,
+        'Czechia': 36.5, 'Romania': 32.4, 'Hungary': 43.0,
+        'Poland': 40.7, 'Slovakia': 27.2, 'Bulgaria': 33.7,
+        'Croatia': 21.4, 'Slovenia': 42.6, 'Estonia': 37.6,
+        'Latvia': 33.4, 'Lithuania': 28.3, 'Cyprus': 44.9,
+    }
+    country_to_iso = {
+        'Belgium': 'BEL', 'Luxembourg': 'LUX', 'Malta': 'MLT',
+        'Italy': 'ITA', 'Denmark': 'DNK', 'Germany': 'DEU',
+        'Austria': 'AUT', 'Sweden': 'SWE', 'Ireland': 'IRL',
+        'Netherlands': 'NLD', 'France': 'FRA', 'Spain': 'ESP',
+        'Portugal': 'PRT', 'Greece': 'GRC', 'Finland': 'FIN',
+        'Czechia': 'CZE', 'Romania': 'ROU', 'Hungary': 'HUN',
+        'Poland': 'POL', 'Slovakia': 'SVK', 'Bulgaria': 'BGR',
+        'Croatia': 'HRV', 'Slovenia': 'SVN', 'Estonia': 'EST',
+        'Latvia': 'LVA', 'Lithuania': 'LTU', 'Cyprus': 'CYP',
+    }
+    df_map = pd.DataFrame([
+        {'country': k, 'iso_alpha': country_to_iso[k], 'turnout': v}
+        for k, v in turnout_2024.items()
+    ])
+    fig = px.choropleth(
+        df_map,
+        locations='iso_alpha',
+        color='turnout',
+        hover_name='country',
+        hover_data={'turnout': ':.1f', 'iso_alpha': False},
+        color_continuous_scale='Blues',
+        range_color=[20, 90],
+        scope='europe',
+        title='2024 EU Parliamentary Election Voter Turnout (%)',
+        labels={'turnout': 'Turnout (%)'},
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=40, b=0),
+        height=600,
+        coloraxis_colorbar=dict(title='Turnout %'),
+        geo=dict(
+            showcoastlines=True,
+            coastlinecolor='white',
+            showland=True,
+            landcolor='lightgray',
+            showframe=False,
+            lonaxis=dict(range=[-25, 45]),
+            lataxis=dict(range=[34, 72]),
+        )
+    )
+    st.plotly_chart(fig, use_container_width=True, key=key)
+
+
 def make_steps(prefix):
     return [
         {
             "key": f"{prefix}_country_name",
             "label": "Name your Country",
-            "description": "Every country needs a name. This is how your simulation will be saved.",
+            "description": "Every country needs a name! This is your chance to get creative. The name won't affect the prediction, it's just how your simulation will be saved and identified.",
             "type": "text"
         },
         {
             "key": f"{prefix}_population",
             "label": "Population",
-            "description": "Population size shapes how electoral systems are designed and how turnout is measured.",
+            "description": "Population size shapes how electoral systems are designed and how voter turnout is measured. Larger countries often have more diverse populations and complex political landscapes, which can affect how engaged citizens feel. In the EU, populations range from about 500,000 in Malta to over 80 million in Germany.",
             "type": "number",
             "default": 5000000,
             "min": 1,
@@ -54,7 +150,7 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_median_age",
             "label": "Median Age",
-            "description": "Older populations often vote at higher rates than younger populations.",
+            "description": "The median age of a population is one of the strongest predictors of voter turnout. Older populations tend to vote at significantly higher rates than younger ones, older citizens often feel more invested in political outcomes and have more stable voting habits. The EU average median age is around 44 years.",
             "type": "number",
             "default": 40,
             "min": 18,
@@ -63,7 +159,7 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_unemployment_rate",
             "label": "Unemployment Rate (%)",
-            "description": "Economic conditions can affect political participation and trust.",
+            "description": "Economic conditions have a complex relationship with political participation. High unemployment can discourage civic engagement when people feel the system isn't working for them, but it can also mobilize voters who want change. The EU average unemployment rate has historically ranged between 5% and 12%.",
             "type": "slider",
             "default": 10,
             "min": 0,
@@ -72,21 +168,21 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_compulsory_voting",
             "label": "Compulsory Voting",
-            "description": "Countries with mandatory voting often have higher turnout.",
+            "description": "In some countries, voting is legally required for eligible citizens. Belgium and Luxembourg are the only EU countries that meaningfully enforce compulsory voting laws, and both consistently have some of the highest turnout rates in Europe, often above 85%. Making voting optional tends to lower participation significantly.",
             "type": "radio",
             "options": ["Yes", "No"]
         },
         {
             "key": f"{prefix}_region",
             "label": "Region",
-            "description": "Region helps the model account for broad voting patterns across Europe.",
+            "description": "Where a country is located in Europe has a strong effect on EU election turnout, even after accounting for other factors. Western European countries average around 20 percentage points higher turnout than Eastern European ones. This reflects differences in how long countries have been EU members, historical relationships with democratic institutions, and levels of trust in the European project.",
             "type": "selectbox",
             "options": ["Northern", "Southern", "Western", "Eastern"]
         },
         {
             "key": f"{prefix}_nat_election_turnout",
             "label": "National Election Turnout (%)",
-            "description": "Countries with higher national election turnout often have higher EU election turnout too.",
+            "description": "Countries where citizens regularly participate in national elections also tend to vote more in EU elections. If people are in the habit of voting domestically, they are more likely to show up for European elections too. National turnout in EU countries ranges widely, from around 35% in some Eastern European countries to over 90% in Belgium.",
             "type": "slider",
             "default": 60,
             "min": 0,
@@ -120,7 +216,6 @@ def run_step_simulation(prefix, step_key):
             key=key,
             label_visibility="collapsed"
         )
-        
 
     elif current["type"] == "number":
         st.number_input(
@@ -177,7 +272,6 @@ def run_step_simulation(prefix, step_key):
             if st.button("Next →", type="primary", use_container_width=True, key=f"{prefix}_next"):
                 if key == f"{prefix}_country_name":
                     typed_name = st.session_state.get(key, "").strip()
-
                     if not typed_name:
                         st.error("Please enter a country name.")
                     else:
@@ -216,6 +310,7 @@ def run_step_simulation(prefix, step_key):
                         "similar": similar,
                         "similar_turnout": similar_turnout,
                         "country": country,
+                        "comparison": result.get("comparison"),
                     }
 
                     sim_payload = {
@@ -262,6 +357,10 @@ def show_prediction(prefix, step_key):
         col_b.metric("Most Similar Country", similar)
         col_c.metric("Their Turnout", f"{similar_turnout}%", delta=f"{predicted - similar_turnout:.1f}%")
 
+        st.divider()
+        show_comparison(p.get("comparison"), country)
+        st.divider()
+        show_turnout_heatmap(key=f"{prefix}_heatmap")
         st.divider()
 
         if st.button("← Try Again", type="primary", key=f"{prefix}_try_again"):
