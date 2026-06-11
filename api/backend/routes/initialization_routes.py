@@ -114,3 +114,45 @@ def get_student_profile(studentID):
         return jsonify({"error": "profile not found"}), 404
 
     return jsonify(profile)
+
+
+@apiinit_bp.route("/simulations", methods=["POST"])
+def create_simulation():
+    data = request.get_json()
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("""
+        INSERT INTO Simulation
+        (
+            studentID,
+            countryName,
+            population,
+            unemploymentRate,
+            compulsoryVoting,
+            medianAge,
+            region,
+            nationalTurnout,
+            predictedTurnout,
+            createdBy,
+            updatedBy
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        data["studentID"],
+        data["countryName"],
+        data["population"],
+        data["unemploymentRate"],
+        data["compulsoryVoting"],
+        data["medianAge"],
+        data["region"],
+        data["nationalTurnout"],
+        data["predicted_turnout"],
+        data["studentID"],
+        data["studentID"],
+    ))
+
+    db.commit()
+    cursor.close()
+
+    return jsonify({"message": "simulation saved"}), 201
