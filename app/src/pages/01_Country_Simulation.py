@@ -347,7 +347,7 @@ with tab1:
 
 with tab2:
     st.write("### Custom Simulation")
-    st.write("Start from scratch and build your country one question at a time.")
+    st.write("Start from scratch and build your country one question at a time. View your creations in 'Your Simulations.'")
 
     if "custom_defaults_loaded" not in st.session_state:
         st.session_state["c_country_name"] = ""
