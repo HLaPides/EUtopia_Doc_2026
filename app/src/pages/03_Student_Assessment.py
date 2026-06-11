@@ -60,12 +60,26 @@ else:
                         label_visibility="collapsed"
                     )
                 elif qtype == "Multiple Choice":
-                    answers[qid] = st.radio(
-                        label="",
-                        options=["A", "B", "C", "D"],
-                        key=f"q_{qid}",
-                        label_visibility="collapsed"
-                    )
+                    options_response = requests.get(f"{BASE_URL}/questions/{qid}/options")
+
+                    if options_response.status_code == 200:
+                        option_rows = options_response.json()
+                        option_texts = [o["optionText"] for o in option_rows]
+
+                        if option_texts:
+                            answers[qid] = st.radio(
+                                label="",
+                                options=option_texts,
+                                key=f"q_{qid}",
+                                label_visibility="collapsed"
+                            )
+                        else:
+                            st.warning("No answer choices found for this question.")
+                            answers[qid] = ""
+                    else:
+                        st.warning("Could not load answer choices.")
+                        answers[qid] = ""
+                    
                 else:
                     answers[qid] = st.text_input(
                         label="",

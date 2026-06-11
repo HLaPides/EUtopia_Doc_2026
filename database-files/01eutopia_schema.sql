@@ -7,6 +7,7 @@ CREATE DATABASE IF NOT EXISTS eutopia_db;
 USE eutopia_db;
 
 DROP TABLE IF EXISTS Response;
+DROP TABLE IF EXISTS QuestionOption;
 DROP TABLE IF EXISTS Question;
 DROP TABLE IF EXISTS Assessment;
 DROP TABLE IF EXISTS StudentProgress;
@@ -115,6 +116,19 @@ CREATE TABLE IF NOT EXISTS Question (
     updatedBy INT,
     FOREIGN KEY (assessmentID) REFERENCES Assessment(assessmentID)
 );
+
+CREATE TABLE IF NOT EXISTS QuestionOption (
+    optionID INT AUTO_INCREMENT PRIMARY KEY,
+    questionID INT NOT NULL,
+    optionText TEXT NOT NULL,
+    isCorrect BOOLEAN DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedBy INT,
+    FOREIGN KEY (questionID) REFERENCES Question(questionID)
+);
+
 
 CREATE TABLE IF NOT EXISTS Response (
     responseID INT AUTO_INCREMENT PRIMARY KEY,
