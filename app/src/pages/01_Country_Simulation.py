@@ -51,13 +51,13 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_country_name",
             "label": "Name your Country",
-            "description": "Every country needs a name. This is how your simulation will be saved.",
+            "description": "Every country needs a name! This is your chance to get creative. The name won't affect the prediction, it's just how your simulation will be saved and identified.",
             "type": "text"
         },
         {
             "key": f"{prefix}_population",
             "label": "Population",
-            "description": "Population size shapes how electoral systems are designed and how turnout is measured.",
+            "description": "Population size shapes how electoral systems are designed and how voter turnout is measured. Larger countries often have more diverse populations and complex political landscapes, which can affect how engaged citizens feel. In the EU, populations range from about 500,000 in Malta to over 80 million in Germany.",
             "type": "number",
             "default": 5000000,
             "min": 1,
@@ -66,7 +66,7 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_median_age",
             "label": "Median Age",
-            "description": "Older populations often vote at higher rates than younger populations.",
+            "description": "The median age of a population is one of the strongest predictors of voter turnout. Older populations tend to vote at significantly higher rates than younger ones, older citizens often feel more invested in political outcomes and have more stable voting habits. The EU average median age is around 44 years.",
             "type": "number",
             "default": 40,
             "min": 18,
@@ -75,7 +75,7 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_unemployment_rate",
             "label": "Unemployment Rate (%)",
-            "description": "Economic conditions can affect political participation and trust.",
+            "description": "Economic conditions have a complex relationship with political participation. High unemployment can discourage civic engagement when people feel the system isn't working for them, but it can also mobilize voters who want change. The EU average unemployment rate has historically ranged between 5% and 12%.",
             "type": "slider",
             "default": 10,
             "min": 0,
@@ -84,21 +84,21 @@ def make_steps(prefix):
         {
             "key": f"{prefix}_compulsory_voting",
             "label": "Compulsory Voting",
-            "description": "Countries with mandatory voting often have higher turnout.",
+            "description": "In some countries, voting is legally required for eligible citizens. Belgium and Luxembourg are the only EU countries that meaningfully enforce compulsory voting laws, and both consistently have some of the highest turnout rates in Europe, often above 85%. Making voting optional tends to lower participation significantly.",
             "type": "radio",
             "options": ["Yes", "No"]
         },
         {
             "key": f"{prefix}_region",
             "label": "Region",
-            "description": "Region helps the model account for broad voting patterns across Europe.",
+            "description": "Where a country is located in Europe has a strong effect on EU election turnout, even after accounting for other factors. Western European countries average around 20 percentage points higher turnout than Eastern European ones. This reflects differences in how long countries have been EU members, historical relationships with democratic institutions, and levels of trust in the European project.",
             "type": "selectbox",
             "options": ["Northern", "Southern", "Western", "Eastern"]
         },
         {
             "key": f"{prefix}_nat_election_turnout",
             "label": "National Election Turnout (%)",
-            "description": "Countries with higher national election turnout often have higher EU election turnout too.",
+            "description": "Countries where citizens regularly participate in national elections also tend to vote more in EU elections. If people are in the habit of voting domestically, they are more likely to show up for European elections too. National turnout in EU countries ranges widely, from around 35% in some Eastern European countries to over 90% in Belgium.",
             "type": "slider",
             "default": 60,
             "min": 0,
