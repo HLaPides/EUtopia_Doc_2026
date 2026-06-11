@@ -10,6 +10,12 @@ st.set_page_config(layout='wide')
 
 SideBarLinks()
 
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
+
 if not st.session_state.get('authenticated'):
     st.switch_page('Home.py')
 
@@ -56,10 +62,23 @@ st.divider()
 df = pd.DataFrame([{
     "Name":    f"{s['firstName']} {s['lastName']}",
     "Email":   s.get("email", ""),
+    "Country": s.get("countryOrigin", ""),
     "Class":   s.get("className", ""),
 } for s in unique_students])
 
 df = df.sort_values("Class").reset_index(drop=True)
 df.index += 1
 
-st.dataframe(df, use_container_width=True)
+st.markdown(
+    df.style
+    .set_properties(**{'text-align': 'left'})
+    .set_table_styles([
+    {'selector': 'table', 'props': [('width', '100%')]},
+    {'selector': 'th', 'props': [('background-color', '#1a1a2e'), ('color', 'white'), ('padding', '10px'), ('text-align', 'center')]},
+    {'selector': 'td', 'props': [('padding', '8px 12px')]},
+    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f5f5f5')]},
+])
+    .hide(axis='index')
+    .to_html(),
+    unsafe_allow_html=True
+)

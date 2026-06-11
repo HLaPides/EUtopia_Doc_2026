@@ -10,6 +10,12 @@ st.set_page_config(layout='wide')
 
 SideBarLinks()
 
+st.markdown("""
+<style>
+    table { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
+
 if not st.session_state.get('authenticated'):
     st.switch_page('Home.py')
 
@@ -17,6 +23,13 @@ BASE_URL = "http://web-api:4000"
 teacher_id = st.session_state['userID']
 
 st.title("Lessons")
+
+TABLE_STYLES = [
+    {'selector': 'table', 'props': [('width', '100%'), ('border-collapse', 'collapse')]},
+    {'selector': 'th', 'props': [('background-color', '#1a1a2e'), ('color', 'white'), ('padding', '10px'), ('text-align', 'center')]},
+    {'selector': 'td', 'props': [('padding', '8px 12px')]},
+    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f5f5f5')]},
+]
 
 tab1, tab2, tab3 = st.tabs(["My Lessons", "All Lessons", "Create Lesson"])
 
@@ -43,13 +56,21 @@ with tab1:
         df = df.sort_values("Status").reset_index(drop=True)
         df.index += 1
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Lessons", len(df))
         col2.metric("Approved", len(df[df["Status"] == "Approved"]))
         col3.metric("Pending", len(df[df["Status"] == "Pending"]))
+        col4.metric("Rejected", len(df[df["Status"] == "Rejected"]))
 
         st.divider()
-        st.dataframe(df, use_container_width=True)
+        st.markdown(
+            df.style
+            .set_properties(**{'text-align': 'left'})
+            .set_table_styles(TABLE_STYLES)
+            .hide(axis='index')
+            .to_html(),
+            unsafe_allow_html=True
+        )
 
 
 # ── All Lessons ───────────────────────────────────────────────────────────────
@@ -74,13 +95,21 @@ with tab2:
         df_all = df_all.sort_values("Status").reset_index(drop=True)
         df_all.index += 1
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Lessons", len(df_all))
         col2.metric("Approved", len(df_all[df_all["Status"] == "Approved"]))
         col3.metric("Pending", len(df_all[df_all["Status"] == "Pending"]))
+        col4.metric("Rejected", len(df_all[df_all["Status"] == "Rejected"]))
 
         st.divider()
-        st.dataframe(df_all, use_container_width=True)
+        st.markdown(
+            df_all.style
+            .set_properties(**{'text-align': 'left'})
+            .set_table_styles(TABLE_STYLES)
+            .hide(axis='index')
+            .to_html(),
+            unsafe_allow_html=True
+        )
 
 
 # ── Create Lesson ─────────────────────────────────────────────────────────────
