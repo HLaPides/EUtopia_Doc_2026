@@ -88,9 +88,9 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
             "democracySatisfaction": democracy_converted,
         }
 
-        response = requests.post(f"{BASE_URL}/survey", json=payload)
+        response = requests.post(f"{BASE_URL}/surveys", json=payload)
 
         if response.status_code == 201:
             st.success("Survey submitted successfully!")
         else:
-            st.error("Something went wrong. Please try again.")
+            st.error("Something went wrong. Please try again.") 
