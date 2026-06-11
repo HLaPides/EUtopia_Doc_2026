@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 import pandas as pd
 import streamlit as st
 import requests
+import plotly.express as px
 from modules.nav import SideBarLinks
 
 st.set_page_config(layout='wide')
@@ -44,6 +45,89 @@ COUNTRY_NAMES = {
     'PT': 'Portugal', 'RO': 'Romania', 'SE': 'Sweden',
     'SI': 'Slovenia', 'SK': 'Slovakia', 'EL': 'Greece',
 }
+
+
+def show_comparison(comparison: dict, country_name: str = "Your Country"):
+    if not comparison:
+        return
+    st.subheader("Feature Comparison")
+    df = pd.DataFrame(comparison).T.copy()
+    df.index = df.index.map(lambda x: country_name if x == "input" else x)
+    df.index.name = "Country"
+    df = df.reset_index()
+    df = df.astype(str)
+    for col in df.columns:
+        if col in ("Country", "Compulsory Voting"):
+            continue
+        elif col == "Population":
+            df[col] = df[col].apply(lambda x: f"{int(float(x)):,}" if x not in ("nan", "") else x)
+        elif col == "National Turnout %":
+            df[col] = df[col].apply(lambda x: f"{float(x):.2f}%" if x not in ("nan", "") else x)
+        else:
+            df[col] = df[col].apply(lambda x: f"{float(x):.2f}" if x not in ("nan", "") else x)
+    st.markdown(
+        df.style
+        .set_table_styles(TABLE_STYLES)
+        .hide(axis='index')
+        .to_html(),
+        unsafe_allow_html=True
+    )
+
+
+def show_turnout_heatmap():
+    turnout_2024 = {
+        'Belgium': 89.0, 'Luxembourg': 84.1, 'Malta': 72.8,
+        'Italy': 49.7, 'Denmark': 58.7, 'Germany': 64.8,
+        'Austria': 59.6, 'Sweden': 54.5, 'Ireland': 50.0,
+        'Netherlands': 46.0, 'France': 51.5, 'Spain': 49.2,
+        'Portugal': 36.4, 'Greece': 41.8, 'Finland': 40.0,
+        'Czechia': 36.5, 'Romania': 32.4, 'Hungary': 43.0,
+        'Poland': 40.7, 'Slovakia': 27.2, 'Bulgaria': 33.7,
+        'Croatia': 21.4, 'Slovenia': 42.6, 'Estonia': 37.6,
+        'Latvia': 33.4, 'Lithuania': 28.3, 'Cyprus': 44.9,
+    }
+    country_to_iso = {
+        'Belgium': 'BEL', 'Luxembourg': 'LUX', 'Malta': 'MLT',
+        'Italy': 'ITA', 'Denmark': 'DNK', 'Germany': 'DEU',
+        'Austria': 'AUT', 'Sweden': 'SWE', 'Ireland': 'IRL',
+        'Netherlands': 'NLD', 'France': 'FRA', 'Spain': 'ESP',
+        'Portugal': 'PRT', 'Greece': 'GRC', 'Finland': 'FIN',
+        'Czechia': 'CZE', 'Romania': 'ROU', 'Hungary': 'HUN',
+        'Poland': 'POL', 'Slovakia': 'SVK', 'Bulgaria': 'BGR',
+        'Croatia': 'HRV', 'Slovenia': 'SVN', 'Estonia': 'EST',
+        'Latvia': 'LVA', 'Lithuania': 'LTU', 'Cyprus': 'CYP',
+    }
+    df_map = pd.DataFrame([
+        {'country': k, 'iso_alpha': country_to_iso[k], 'turnout': v}
+        for k, v in turnout_2024.items()
+    ])
+    fig = px.choropleth(
+        df_map,
+        locations='iso_alpha',
+        color='turnout',
+        hover_name='country',
+        hover_data={'turnout': ':.1f', 'iso_alpha': False},
+        color_continuous_scale='Blues',
+        range_color=[20, 90],
+        scope='europe',
+        title='2024 EU Parliamentary Election Voter Turnout (%)',
+        labels={'turnout': 'Turnout (%)'},
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=40, b=0),
+        height=600,
+        coloraxis_colorbar=dict(title='Turnout %'),
+        geo=dict(
+            showcoastlines=True,
+            coastlinecolor='white',
+            showland=True,
+            landcolor='lightgray',
+            showframe=False,
+            lonaxis=dict(range=[-25, 45]),
+            lataxis=dict(range=[34, 72]),
+        )
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def make_steps(prefix):
@@ -132,7 +216,6 @@ def run_step_simulation(prefix, step_key):
             key=key,
             label_visibility="collapsed"
         )
-        
 
     elif current["type"] == "number":
         st.number_input(
@@ -189,7 +272,6 @@ def run_step_simulation(prefix, step_key):
             if st.button("Next →", type="primary", use_container_width=True, key=f"{prefix}_next"):
                 if key == f"{prefix}_country_name":
                     typed_name = st.session_state.get(key, "").strip()
-
                     if not typed_name:
                         st.error("Please enter a country name.")
                     else:
@@ -228,6 +310,7 @@ def run_step_simulation(prefix, step_key):
                         "similar": similar,
                         "similar_turnout": similar_turnout,
                         "country": country,
+                        "comparison": result.get("comparison"),
                     }
 
                     sim_payload = {
@@ -274,6 +357,10 @@ def show_prediction(prefix, step_key):
         col_b.metric("Most Similar Country", similar)
         col_c.metric("Their Turnout", f"{similar_turnout}%", delta=f"{predicted - similar_turnout:.1f}%")
 
+        st.divider()
+        show_comparison(p.get("comparison"), country)
+        st.divider()
+        show_turnout_heatmap()
         st.divider()
 
         if st.button("← Try Again", type="primary", key=f"{prefix}_try_again"):
