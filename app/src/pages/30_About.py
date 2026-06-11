@@ -10,7 +10,6 @@ st.markdown("""
 
 ## Summer 2026 Belgium DoC Project 🇧🇪
 
-This is our team's repo for the Summer 2026 CS4973 final project, part of the Belgium Dialogue run by Dr. Gerber and Dr. Fontenot.
 
 ### Team Members 👩‍🚀
 Sidra Ansari, Vineeth Kanpa, Bennett LaPides, & Meghan Paclob
@@ -31,6 +30,37 @@ Our mission is simple: make civic education engaging, data-driven, and meaningfu
 
 *EUtopia: learn the EU by experiencing it.* 🇪🇺
 """)
+
+
+
+st.title("👩‍🚀 The Team")
+st.write("Meet the people behind EUtopia.")
+
+col1, col2 = st.columns(2)
+col3, col4 = st.columns(2)
+
+with col1:
+    st.image("assets/sidra.png", width=250)
+    st.subheader("Sidra Ansari")
+    st.write("I am a rising fourth year studying electrical & computer engineering. I contributed to EUtopia through backend development, database design, API implementation, and user interface improvements.")
+
+with col2:
+    st.image("assets/vineeth.png", width=250)
+    st.subheader("Vineeth Kanpa")
+    st.write("Machine Learning & Backend")
+
+with col3:
+    st.image("assets/bennett.png", width=250)
+    st.subheader("Bennett LaPides")
+    st.write("Frontend & UI")
+
+with col4:
+    st.image("assets/meghan.png", width=250)
+    st.subheader("Meghan Paclob")
+    st.write("Testing & Documentation")
+
+
+
 
 if st.button("Return to Home", type="primary"):
     st.switch_page("Home.py")
