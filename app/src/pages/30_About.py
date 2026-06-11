@@ -57,7 +57,7 @@ with col3:
 with col4:
     st.image("assets/meghan.png", width=250)
     st.subheader("Meghan Paclob")
-    st.write("Testing & Documentation")
+    st.write("I am a rising third year computer science and design student. I contributed to Eutopia through database design, API implementation, and UI design.")
 
 
 
