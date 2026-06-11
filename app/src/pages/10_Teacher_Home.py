@@ -28,16 +28,40 @@ for class_id in class_ids:
 student_progress = []
 for s in students:
     progress = requests.get(f"{BASE_URL}/progress/{s['userID']}").json()
-    completed = len([p for p in progress if p.get("completionStatus") == "Completed"])
+
+    valid_completion = [
+        float(p.get("completionRate", 0))
+        for p in progress
+        if p.get("completionRate") is not None
+    ]
+
+    valid_quiz_scores = [
+        float(p.get("quizPerformance", 0))
+        for p in progress
+        if p.get("quizPerformance") is not None
+    ]
+
     total = len(progress)
-    pct = int((completed / total) * 100) if total > 0 else 0
+
+    avg_completion = (
+        sum(valid_completion) / len(valid_completion)
+        if valid_completion else 0
+    )
+
+    avg_quiz = (
+        sum(valid_quiz_scores) / len(valid_quiz_scores)
+        if valid_quiz_scores else 0
+    )
+
     avg_engagement = (
         sum(float(p.get("avgEngagementTime", 0)) for p in progress) / total
         if total > 0 else 0
-    )   
+    )
+
     student_progress.append({
         "name": f"{s['firstName']} {s['lastName']}",
-        "score": pct,
+        "score": round(avg_quiz, 1),
+        "completion": round(avg_completion, 1),
         "engagement": round(avg_engagement, 1)
     })
 
@@ -54,7 +78,7 @@ with tab1:
             col_name, col_pct, col_bar = st.columns([2, 1, 3])
             col_name.write(s["name"])
             col_pct.write(f"{s['score']}%")
-            col_bar.progress(s["score"])
+            col_bar.progress(int(s["score"]))
     else:
         st.write("No student data available.")
 
