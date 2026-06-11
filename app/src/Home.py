@@ -47,8 +47,69 @@ def user_label(user):
     return f"{user['firstName']} {user['lastName']}"
 
 logger.info("Loading the Home page of the app")
-st.title('EUtopia')
-st.write('## Learn Europe. Shape Tomorrow.')
+#st.title('EUtopia')
+#here
+st.markdown("""
+<style>
+.eutopia-hero {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.eutopia-orbit {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin: auto;
+    border: 2px solid rgba(80, 100, 255, 0.35);
+    border-radius: 50%;
+    animation: spin 7s linear infinite;
+}
+
+.eutopia-planet {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: -9px;
+    left: 75px;
+    background: #6C63FF;
+    border-radius: 50%;
+    box-shadow: 0 0 18px #6C63FF;
+}
+
+.eutopia-word {
+    margin-top: -110px;
+    font-size: 64px;
+    font-weight: 800;
+    color: #202033;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+</style>
+
+<div class="eutopia-hero">
+    <div class="eutopia-orbit">
+        <div class="eutopia-planet"></div>
+    </div>
+    <div class="eutopia-word">EUtopia</div>
+</div>
+""", unsafe_allow_html=True)
+#tohere
+##st.write('## Learn Europe. Shape Tomorrow.')
+st.markdown(
+    "<h2 style='text-align: center;'>Learn Europe. Shape Tomorrow.</h2>",
+    unsafe_allow_html=True
+)
 st.write('### As which user would you like to log in?')
 
 # For each of the user personas for which we are implementing
