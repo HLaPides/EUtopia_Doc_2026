@@ -75,7 +75,7 @@ with tab1:
                 "description": "The median age of a population is one of the strongest predictors of voter turnout. Older populations tend to vote at significantly higher rates than younger ones, older citizens often feel more invested in political outcomes and have more stable voting habits. The EU average median age is around 44 years.",
                 "type": "number",
                 "default": 40,
-                "min": 18
+                "min": 0
             },
             {
                 "key": "g_unemployment_rate",
@@ -174,8 +174,22 @@ with tab1:
         with col_next:
             if step < total_steps - 1:
                 if st.button("Next →", type="primary", use_container_width=True):
-                    st.session_state["guided_step"] += 1
-                    st.rerun()
+                    valid = True
+                    if current["key"] == "g_median_age":
+                        if st.session_state.get("g_median_age", 0) < 18:
+                            st.error("Median age must be at least 18.")
+                            valid = False
+                    if current["key"] == "g_population":
+                        if st.session_state.get("g_population", 0) <= 0:
+                            st.error("Population must be greater than 0.")
+                            valid = False
+                    if current["key"] == "g_country_name":
+                        if not st.session_state.get("g_country_name", "").strip():
+                            st.error("Please enter a country name.")
+                            valid = False
+                    if valid:
+                        st.session_state["guided_step"] += 1
+                        st.rerun()
             else:
                 if st.button("Predict EU Election Turnout", type="primary"):
                     region_val = st.session_state.get("g_region", "Eastern")
