@@ -6,7 +6,6 @@ from backend.ml_models.voter_turnout_model import predict_turnout
 svys_bp = Blueprint("svys", __name__)
 
 # ── Surveys ───────────────────────────────────────────────────────────────────
-
 @svys_bp.route("/surveys", methods=["POST"])
 def submit_survey():
     data = request.get_json()
@@ -15,20 +14,17 @@ def submit_survey():
     cursor.execute(
         """
         INSERT INTO DiagnosticSurvey
-        (studentID, age, educationLevel, gender, politicalInterest,
-         trustNationalParliament, trustPoliticians, satisfactionDemocracy,
-         predictedTrust, createdBy, updatedBy)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        (studentID, educationLevel, politicalAffiliation, trustEuroParliament,
+        trustPoliticians, satisfactionDemocracy, predictedTrust, createdBy, updatedBy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             data["studentID"],
-            data.get("age"),
             data.get("educationLevel"),
-            data.get("gender"),
-            data.get("politicalInterest"),
-            data.get("trustNationalParliament"),
+            str(data.get("leftRight")),
+            data.get("trustEuroParliament"),
             data.get("trustPoliticians"),
-            data.get("satisfactionDemocracy"),
+            data.get("democracySatisfaction"),
             data.get("predictedTrust"),
             data["studentID"],
             data["studentID"],

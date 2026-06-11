@@ -1,6 +1,6 @@
 import logging
 logger = logging.getLogger(__name__)
-
+import time
 import streamlit as st
 import requests
 from modules.nav import SideBarLinks
@@ -76,6 +76,7 @@ for lesson in filtered:
                     json={"officialID": st.session_state['userID']}
                 )
                 st.toast(f"✅ Approved: {lesson.get('title')}", icon="✅")
+                time.sleep(0.5)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -88,6 +89,7 @@ for lesson in filtered:
                     json={"officialID": st.session_state['userID']}
                 )
                 st.toast(f"❌ Rejected: {lesson.get('title')}", icon="❌")
+                time.sleep(0.5)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")

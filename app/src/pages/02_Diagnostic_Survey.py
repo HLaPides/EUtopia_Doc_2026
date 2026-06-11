@@ -32,8 +32,8 @@ euro_parliament_trust = st.radio(
         label_visibility="collapsed"
 )
 
-nat_parliament_trust = st.write('### How would you rate your trust in your national parliament?')
-st.radio(
+st.write('### How would you rate your trust in your national parliament?')
+nat_parliament_trust = st.radio(
         label="",
         options= ["1 - Very Low", "2 - Low-Neutral", "3 - Neutral-High", "4 - Very High"],
         key="nat_parliament_trust",
@@ -88,9 +88,12 @@ if st.button("Submit Survey", type="primary", use_container_width=True):
             "democracySatisfaction": democracy_converted,
         }
 
-        response = requests.post(f"{BASE_URL}/survey", json=payload)
+
+        response = requests.post(f"{BASE_URL}/surveys", json=payload)
 
         if response.status_code == 201:
             st.success("Survey submitted successfully!")
         else:
             st.error("Something went wrong. Please try again.")
+            st.write(response.status_code)
+            st.write(response.text)
