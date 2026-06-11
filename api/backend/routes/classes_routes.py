@@ -46,10 +46,10 @@ def get_class_students(classID):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.userID, u.firstName, u.lastName, u.email
-        FROM StudentProfile sp
-        JOIN Users u ON sp.studentID = u.userID
-        WHERE sp.classID = %s
+    SELECT u.userID, u.firstName, u.lastName, u.email, u.countryOrigin
+    FROM StudentProfile sp
+    JOIN Users u ON sp.studentID = u.userID
+    WHERE sp.classID = %s
     """, (classID,))
     students = cursor.fetchall()
     cursor.close()

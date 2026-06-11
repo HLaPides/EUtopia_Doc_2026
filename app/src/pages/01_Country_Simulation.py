@@ -74,7 +74,7 @@ def show_comparison(comparison: dict, country_name: str = "Your Country"):
     )
 
 
-def show_turnout_heatmap():
+def show_turnout_heatmap(key: str = "heatmap"):
     turnout_2024 = {
         'Belgium': 89.0, 'Luxembourg': 84.1, 'Malta': 72.8,
         'Italy': 49.7, 'Denmark': 58.7, 'Germany': 64.8,
@@ -127,7 +127,7 @@ def show_turnout_heatmap():
             lataxis=dict(range=[34, 72]),
         )
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 
 def make_steps(prefix):
@@ -360,7 +360,7 @@ def show_prediction(prefix, step_key):
         st.divider()
         show_comparison(p.get("comparison"), country)
         st.divider()
-        show_turnout_heatmap()
+        show_turnout_heatmap(key=f"{prefix}_heatmap")
         st.divider()
 
         if st.button("← Try Again", type="primary", key=f"{prefix}_try_again"):
