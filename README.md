@@ -21,3 +21,12 @@ Behind the scenes, EUtopia combines a relational database, REST APIs, interactiv
 Our mission is simple: make civic education engaging, data-driven, and meaningful so that future European citizens feel informed, confident, and ready to participate in democracy.
 
 EUtopia: learn the EU by experiencing it. 🇪🇺
+
+## Getting Started
+
+1. Clone the repository
+2. Create a `.env` file in the root directory with the required environment variables
+3. Run `docker-compose up -d` to start all services
+4. Open your browser and navigate to `http://localhost:8501`
+
+Everything runs automatically on startup.
