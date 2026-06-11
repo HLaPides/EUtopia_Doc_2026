@@ -16,35 +16,45 @@ if not st.session_state.get('authenticated'):
 BASE_URL = "http://web-api:4000"
 teacher_id = st.session_state['userID']
 
-st.title("My Lessons")
+st.title("Lessons")
 
 try:
     all_lessons = requests.get(f"{BASE_URL}/lessons").json()
-    lessons = [l for l in all_lessons if l.get("teacherID") == teacher_id]
 except Exception:
     st.error("Could not load lessons.")
     st.stop()
 
-if not lessons:
-    st.info("You have not created any lessons yet.")
-    st.stop()
+my_lessons = [l for l in all_lessons if l.get("teacherID") == teacher_id]
 
-df = pd.DataFrame([{
-    "Title":           l.get("title", ""),
-    "Topic":           l.get("topicName", ""),
-    "Difficulty":      l.get("difficultyLevel", ""),
-    "Status":          l.get("approvalStatus", ""),
-    "Class ID":        l.get("classID", ""),
-} for l in lessons])
+tab1, tab2 = st.tabs(["My Lessons", "All Lessons"])
 
-df = df.sort_values("Status").reset_index(drop=True)
-df.index += 1
+def show_lessons(lessons):
+    if not lessons:
+        st.info("No lessons found.")
+        return
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Lessons", len(df))
-col2.metric("Approved", len(df[df["Status"] == "Approved"]))
-col3.metric("Pending", len(df[df["Status"] == "Pending"]))
+    df = pd.DataFrame([{
+        "Title":      l.get("title", ""),
+        "Topic":      l.get("topicName", ""),
+        "Difficulty": l.get("difficultyLevel", ""),
+        "Status":     l.get("approvalStatus", ""),
+    } for l in lessons])
 
-st.divider()
+    df = df.sort_values("Status").reset_index(drop=True)
+    df.index += 1
 
-st.dataframe(df, use_container_width=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Lessons", len(df))
+    col2.metric("Approved", len(df[df["Status"] == "Approved"]))
+    col3.metric("Pending", len(df[df["Status"] == "Pending"]))
+
+    st.divider()
+    st.dataframe(df, use_container_width=True)
+
+with tab1:
+    st.subheader("My Lessons")
+    show_lessons(my_lessons)
+
+with tab2:
+    st.subheader("All Lessons")
+    show_lessons(all_lessons)
