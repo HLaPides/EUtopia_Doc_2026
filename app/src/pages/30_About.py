@@ -52,7 +52,7 @@ with col2:
 with col3:
     st.image("assets/bennett.png", width=250)
     st.subheader("Bennett LaPides")
-    st.write("\I am a rising second year studying computer science. I contributed to EUtopia through the voter turnout model and ui design")
+    st.write("I am a rising second year studying computer science. I contributed to EUtopia through the voter turnout model and ui design")
 
 with col4:
     st.image("assets/meghan.png", width=250)
