@@ -18,11 +18,11 @@ You can experience the platform from multiple perspectives:
 
 Behind the scenes, EUtopia combines a relational database, REST APIs, interactive visualizations, and machine learning models that predict voter turnout using demographic and political indicators.
 
-Our mission is simple: make civic education engaging, data-driven, and meaningful so that future European citizens feel informed, confident, and ready to participate in democracy.
+Our mission is simple: make civic education engaging, data-driven, and meaningful so that European citizens feel informed, confident, and ready to participate in democracy.
 
-EUtopia: learn the EU by experiencing it. 🇪🇺
+**EUtopia: learn the EU by experiencing it. 🇪🇺**
 
-
+---
 ## Getting Started
 1. Clone the repository
 2. Create a `.env` file in the root directory with the required environment variables
@@ -31,11 +31,11 @@ EUtopia: learn the EU by experiencing it. 🇪🇺
 
 Everything runs automatically on startup.
 
-
+---
 ## Blog
-Here is a link to our blog documenting the process of creating our platform:
+Here is the link to our blog documenting the process of creating our platform:
 https://vineethkanpa07.github.io/CS4973_Project_Group7/
 
-
+---
 ## Contributions
 - [Team Member Contributions](contributions.md)
