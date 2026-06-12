@@ -22,6 +22,7 @@ Our mission is simple: make civic education engaging, data-driven, and meaningfu
 
 EUtopia: learn the EU by experiencing it. 🇪🇺
 
+=========
 ## Getting Started
 
 1. Clone the repository
@@ -31,10 +32,13 @@ EUtopia: learn the EU by experiencing it. 🇪🇺
 
 Everything runs automatically on startup.
 
-### Blog
+=========
+## Blog
+
 Here is a link to our blog documenting the process of creating our platform:
 https://vineethkanpa07.github.io/CS4973_Project_Group7/
+
 =========
-### Contributions
+## Contributions
 
 - [Team Member Contributions](contributions.md)
